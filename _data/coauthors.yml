@@ -1,34 +1,39 @@
-"adams":
-  - firstname: ["Edwin", "E.", "E. P.", "Edwin Plimpton"]
-    url: https://en.wikipedia.org/wiki/Edwin_Plimpton_Adams
+"porfirio":
+  - firstname: ["David"]
+    url: https://dporfirio.github.io/
 
-"podolsky":
-  - firstname: ["Boris", "B.", "B. Y.", "Boris Yakovlevich"]
-    url: https://en.wikipedia.org/wiki/Boris_Podolsky
+"chan":
+  - firstname: ["David"]
+    url: https://www.dhchan.net/
 
-"rosen":
-  - firstname: ["Nathan", "N."]
-    url: https://en.wikipedia.org/wiki/Nathan_Rosen
+"roberts":
+  - firstname: ["Mark", "Mak"]
+    url: https://makro-nrl.bitbucket.io/
 
-"bach":
-  - firstname: ["Johann Sebastian", "J. S."]
-    url: https://en.wikipedia.org/wiki/Johann_Sebastian_Bach
+"hiatt":
+  - firstname: ["Laura", "Laura M."]
+    url: https://sites.google.com/site/lahiatt/home
 
-  - firstname: ["Carl Philipp Emanuel", "C. P. E."]
-    url: https://en.wikipedia.org/wiki/Carl_Philipp_Emanuel_Bach
+"alexeev":
+  - firstname: ["Boris"]
+    url: https://borisalexeev.com/
 
-"przibram":
-  - firstname: ["Karl"]
-    url: https://link.springer.com/article/10.1007/s00016-019-00242-z
+"rosenfeld":
+  - firstname: ["Matthieu"]
+    url: https://www.lirmm.fr/~mrosenfeld/
 
-"schrodinger":
-  - firstname: ["Erwin"]
-    url: https://en.wikipedia.org/wiki/Erwin_Schr%C3%B6dinger
+"sutherland":
+  - firstname: ["Andrew", "Andrew V."]
+    url: https://math.mit.edu/~drew/
 
-"lorentz":
-  - firstname: ["Hendrik Antoon"]
-    url: https://en.wikipedia.org/wiki/Hendrik_Lorentz
+"tao":
+  - firstname: ["Terence"]
+    url: https://www.math.ucla.edu/~tao/
 
-"planck":
-  - firstname: ["Max"]
-    url: https://en.wikipedia.org/wiki/Max_Planck
+"uhr":
+  - firstname: ["Markus"]
+    url: https://scholar.google.com/citations?user=cLZSwlwAAAAJ&hl=en
+
+"ventullo":
+  - firstname: ["Kevin"]
+    url: https://kevinventullo.com/about/
