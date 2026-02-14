@@ -455,7 +455,7 @@ ninja.data = [{
           title: 'Decomposing a factorial into large factors',
           description: "",
           section: "Papers",handler: () => {
-              window.location.href = "/papers/guy-selfridge/";
+              window.location.href = "/https:/arxiv.org/abs/2503.20170";
             },},{id: "papers-portal-plan-orchestrated-tree-assembly-for-lookahead",
           title: 'POrTAL: Plan-Orchestrated Tree Assembly for Lookahead',
           description: "",
