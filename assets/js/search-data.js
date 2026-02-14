@@ -451,13 +451,13 @@ ninja.data = [{
             },},{id: "news-a-simple-inline-announcement-with-markdown-emoji-sparkles-smile",
           title: 'A simple inline announcement with Markdown emoji! :sparkles: :smile:',
           description: "",
-          section: "News",},{id: "papers-decomposing-a-factorial-into-large-factors",
-          title: 'Decomposing a factorial into large factors',
+          section: "News",},{id: "papers-paper-decomposing-a-factorial-into-large-factors",
+          title: 'Paper: Decomposing a factorial into large factors',
           description: "",
           section: "Papers",handler: () => {
               window.location.href = "/papers/guy-selfridge/";
-            },},{id: "papers-portal-plan-orchestrated-tree-assembly-for-lookahead",
-          title: 'POrTAL: Plan-Orchestrated Tree Assembly for Lookahead',
+            },},{id: "papers-paper-portal-plan-orchestrated-tree-assembly-for-lookahead",
+          title: 'Paper: POrTAL: Plan-Orchestrated Tree Assembly for Lookahead',
           description: "",
           section: "Papers",handler: () => {
               window.location.href = "/papers/portal/";
