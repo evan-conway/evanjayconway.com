@@ -10,7 +10,8 @@
       {% else %}
         {% assign redirect = page.redirect | relative_url %}
       {% endif %}
-      <meta http-equiv="refresh" content="3; url={{ redirect }}">
+      <script>window.location.replace("{{ redirect }}");</script>
+      <meta http-equiv="refresh" content="0; url={{ redirect }}">
     {% endif %}
     {% include head.liquid %}
   </head>
