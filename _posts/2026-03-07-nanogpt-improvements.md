@@ -5,7 +5,8 @@ date: 2026-03-07
 description: Improvements to the NanoGPT and NanoChat speedruns
 
 bibliography: nanogpt-improvements.bib
-toc: true
+toc:
+  sidebar: left
 ---
 
 ## Fast Training for Dummies
