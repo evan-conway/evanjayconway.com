@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/publications/";
           },
-        },{id: "books-the-godfather",
+        },{id: "post-nanogpt-speedrun-improvements",
+        
+          title: "NanoGPT Speedrun Improvements",
+        
+        description: "Improvements to the NanoGPT and NanoChat speedruns",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/posts/2026/nanogpt-improvements/";
+          
+        },
+      },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
           section: "Books",handler: () => {
