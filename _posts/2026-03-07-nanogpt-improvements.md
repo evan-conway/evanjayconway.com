@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Speedrunning GPT-2 Training for Fun and Profit
+title: A Field Guide to NanoGPT Speedrun Optimizations
 date: 2026-03-07
-description: A Field Guide to NanoGPT Speedrun Optimizations
+description: Improvements to the NanoGPT and NanoChat speedruns
 
 bibliography: nanogpt-improvements.bib
 toc:
