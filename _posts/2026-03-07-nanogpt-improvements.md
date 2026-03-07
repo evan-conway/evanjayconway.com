@@ -28,6 +28,7 @@ This writeup discusses a lot of different optimizations. But which ones give the
 1. Switch to using the Muon optimizer with the improvements discussed in the [Muon section](#muon), and properly tune its hyperparameters
 1. Apply all the modifications in the [Modernized Architecture section](#modernized-architecture)
 1. Update PyTorch to the latest version and use the [latest FlashAttention release](#flashattention) for your attention computation
+1. Use a high-quality dataset, like [Nemotron-ClimbMix](#climbmix)
 1. Check all your tensors to make sure that their dimensions are multiples of a [sufficiently large power of two](#aligning-to-multiples-of-64)
 1. Try using [value embeddings](#value-embeddings)
 1. Apply a [soft cap to your logits](#logit-soft-capping)
@@ -36,7 +37,7 @@ This writeup discusses a lot of different optimizations. But which ones give the
 
 This writeup covers many other interesting optimizations, but these are a good place to start. Also, this post is by no means exhaustive, and the Modded NanoGPT[^nanogpt] and NanoChat[^nanochat] repositories contain tons of great optimizations that may be of interest.
 
-Also note that many of these improvements may have smaller (or even detrimental) effects on larger models. Where possible, I try to point out when these techniques have been used in more modern LLMs.
+Finally, note that many of these improvements may have smaller (or even detrimental) effects on larger models. Where possible, I try to point out when these techniques have been used in more modern LLMs.
 
 ## Attention
 ---
@@ -59,6 +60,20 @@ A similar method of alternating short and long attention windows was used in GPT
 ### Attention Window Warmup
 
 Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
+
+## ClimbMix
+---
+
+While Modded NanoGPT does not allow changing the training data, NanoChat has experimented with several different training datasets, eventually settling on Nemotron-ClimbMix[^climbmix]. ClimbMix was created through the following procedure:
+1. Begin with data from:
+* Nemotron-CC[^nemotroncc], which filters Common Crawl[^commoncrawl] data for the highest-quality data
+* SmolLM-Corpus[^smollm], a mixture of general educational data from FineWeb-Edu[^fineweb], programming data from The Stack[^thestack], and synthetic data
+1. Cluster the data, creating 21 semantic clusters that cover a variety of different topics
+1. Using a small model, learn the optimal data mixture for performance on downstream tasks
+
+This results in a high-quality dataset that appropriately weights the frequency of various topics.
+
+Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
 
 ## Logit Soft-Capping
 ---
@@ -202,6 +217,18 @@ Some other writeups and resources that may be of use:
 
 ## References
 ---
+
+[^nemotroncc]: Su et al 2024, [*Nemotron-CC: Transforming Common Crawl into a Refined Long-Horizon Pretraining Dataset*](https://arxiv.org/abs/2412.02595)
+
+[^commoncrawl]: [*Common Crawl*](https://commoncrawl.org/)
+
+[^fineweb]: Penedo et al 2024, [*The FineWeb Datasets: Decanting the Web for the Finest Text Data at Scale*](https://arxiv.org/abs/2406.17557)
+
+[^smollm]: Allal et al 2024, [*SmolLM-Corpus*](https://huggingface.co/datasets/HuggingFaceTB/smollm-corpus)
+
+[^thestack]: Kocetkov et al 2022, [*The Stack: 3 TB of permissively licensed source code*](https://arxiv.org/abs/2211.15533)
+
+[^climbmix]: Diao et al 2025, [*Nemotron-CLIMB: CLustering-based Iterative Data Mixture Bootstrapping for Language Model Pre-training*](https://arxiv.org/abs/2504.13161)
 
 [^relu2wins]: Zhang et al 2024, [*ReLU² Wins: Discovering Efficient Activation Functions for Sparse LLMs*](https://arxiv.org/abs/2402.03804)
 
