@@ -23,9 +23,9 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/publications/";
           },
-        },{id: "post-nanogpt-speedrun-improvements",
+        },{id: "post-speedrunning-gpt-2-training-for-fun-and-profit",
         
-          title: "NanoGPT Speedrun Improvements",
+          title: "Speedrunning GPT-2 Training for Fun and Profit",
         
         description: "Improvements to the NanoGPT and NanoChat speedruns",
         section: "Posts",
