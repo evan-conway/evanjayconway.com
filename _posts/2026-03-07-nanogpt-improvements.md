@@ -47,7 +47,7 @@ Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, pl
 
 <div class="row mt-3 justify-content-center">
     <div class="col-sm-8 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/pre_norm_post_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/pre_norm_post_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
     </div>
 </div>
 <div class="caption">
@@ -60,12 +60,12 @@ QKNorm[^qknorm] normalizes each query vector $q_i$ and key vector $k_j$ after sp
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/no_qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/no_qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
     </div>
 </div>
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
     </div>
 </div>
 <div class="caption">
@@ -121,6 +121,15 @@ A similar method of alternating short and long attention windows was used in GPT
 ### Attention Window Warmup
 
 Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
+
+<div class="row mt-3 justify-content-center">
+    <div class="col-sm-10 mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/attention_window_size.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+<div class="caption">
+    An example of alternating attention window lengths, with window length increasing over time. Figure by <a href="https://x.com/leloykun/status/1880301758154698958">Franz Louis Cesista</a>.
+</div>
 
 ## ClimbMix
 ---
@@ -306,7 +315,7 @@ If you found this post useful, please cite it as:
 
 [^momentumwarmup]: [*Keller Jordan post on X*](https://x.com/kellerjordan0/status/1854305895074947465)
 
-[^attentionscale]: [*Leloy Kun post on X*](https://x.com/leloykun/status/1880301762952958435)
+[^attentionscale]: [*Franz Louis Cesista post on X*](https://x.com/leloykun/status/1880301762952958435)
 
 [^valueresiduallearning]: Zhou et al 2025, [*Value Residual Learning*](https://arxiv.org/abs/2410.17897)
 
