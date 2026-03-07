@@ -47,7 +47,7 @@ Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, pl
 
 <div class="row mt-3 justify-content-center">
     <div class="col-sm-8 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/pre_norm_post_norm.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/pre_norm_post_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
     </div>
 </div>
 <div class="caption">
@@ -57,6 +57,20 @@ Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, pl
 ### QKNorm
 
 QKNorm[^qknorm] normalizes each query vector $q_i$ and key vector $k_j$ after splitting along the head dimension and applying RoPE. While the original QKNorm paper uses the $\ell_2$-norm, both NanoChat and Modded NanoGPT apply RMSNorm instead. The primary benefit of this improvement is stopping the softmaxes in the attention computation from being easily saturated by large key or query vectors, allowing for more diverse attention patterns. This also improves training by stopping the attention gradients from growing extremely small. However, one disadvantage of this approach is that it can lead to the model not being able to sufficiently "focus" on important tokens, which has led to some later efforts to tweak the attention scale[^attentionscale].
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/no_qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+<div class="caption">
+    Attention without QK-norm (above) versus attention with QK-norm (below). Figures from <a href="https://arxiv.org/pdf/2010.04245#page=3">Henry et al</a>.
+</div>
 
 ### RMSNorm
 
