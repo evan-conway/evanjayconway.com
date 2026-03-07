@@ -26,7 +26,7 @@ This post covers some of the most impactful upgrades used in both speedruns, wit
 This writeup discusses a lot of different optimizations. But which ones give the largest impact? In approximate order of impact for speedrunning:
 
 1. Switch to using the Muon optimizer with the improvements discussed in the [Muon section](#muon), and properly tune its hyperparameters
-1. Apply all the modifications in the [Architectural Modernizations section](#architectural-modernizations)
+1. Apply all the modifications in the [Modernized Architecture section](#modernized-architecture)
 1. Update PyTorch to the latest version and use the [latest FlashAttention release](#flashattention) for your attention computation
 1. Check all your tensors to make sure that their dimensions are multiples of a [sufficiently large power of two](#aligning-to-multiples-of-64)
 1. Try using [value embeddings](#value-embeddings)
@@ -37,53 +37,6 @@ This writeup discusses a lot of different optimizations. But which ones give the
 This writeup covers many other interesting optimizations, but these are a good place to start. Also, this post is by no means exhaustive, and the Modded NanoGPT[^nanogpt] and NanoChat[^nanochat] repositories contain tons of great optimizations that may be of interest.
 
 Also note that many of these improvements may have smaller (or even detrimental) effects on larger models. Where possible, I try to point out when these techniques have been used in more modern LLMs.
-
-## Architectural Modernizations
----
-
-This section includes architectural modifications that are already relatively well-known, and are implemented in both Modded NanoGPT and NanoChat with minimal adjustments. Additionally, many of these adjustments are fairly standard in modern open-source LLMs. In that sense, the modifications in this section can be considered to be bringing Modded NanoGPT and NanoChat up to speed with modern Transformer implementations.
-
-### Pre-Norm
-
-Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, placing them at the start of each sub-block (attention / MLP). This controls the gradient norm and increases training stability. This was also used in GPT-2[^gpt2], along with many other models.
-
-**TODO: add figure showing the move**
-
-### QKNorm
-
-QKNorm[^qknorm] normalizes each query vector $q_i$ and key vector $k_j$ after splitting along the head dimension and applying RoPE. While the original QKNorm paper uses the $\ell_2$-norm, both NanoChat and Modded NanoGPT apply RMSNorm instead. The primary benefit of this improvement is stopping the softmaxes in the attention computation from being easily saturated by large key or query vectors. This also improves training by stopping the attention gradients from growing extremely small. However, one disadvantage of this approach is that it can lead to the model not being able to sufficiently "focus" on important tokens[^attentionscale].
-
-**TODO: add Figures 1 and 2 from QK-Norm paper**
-
-### RMSNorm
-
-RMSNorm[^rmsnorm] normalizes all input vectors $\mathbf{a}$ according to the formula
-
-$$\overline{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})} g_i$$
-
-Where $a_i$ is the $i$-th value of $\mathbf{a}$, $g_i$ is a learnable gain parameter, and RMS is the root mean square of the relevant vector. Both Modded NanoGPT and NIanoChat also drop the gain parameter $g_i$, yielding
-
-$$\overline{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})}$$
-
-### RoPE
-
-Rotary Position Embedding[^rope] adds positional information to the query and key vectors before performing the attention computation. More specifically, RoPE rotates pairs of dimensions in the query and key vectors based on that token's position and the rotation speed for that dimension pair.
-
-**TODO: feel like I should add more here**
-
-### ReLU²
-
-The ReLU² activation function[^relu2] has been previously shown to strike a good balance between having high sparsity and good performance[^relu2wins]. ReLU² is defined as
-
-$$\text{ReLU}^2(x) = \max(0, x)^2$$
-
-Many modern LLMs instead use SwiGLU[^swiglu] as their activation function. This was tested in NanoChat on several scales, but consistently gave decreased performance.
-
-### Untied Embeddings
-
-The original NanoGPT had tied embeddings, where the LM head matrix is the transpose of the input embedding matrix (as recommended by[^tiedembeddings]). Both Modded NanoGPT and NanoChat untied these matrices, which is common in modern LLMs. One of the reasons why untying is likely to be beneficial in this case is because it increases the parameter count without causing a corresponding increase in the number of FLOPs per pass.
-
-As a side note, tied embeddings can cause some unexpected issues (see Neel Nanda on the SolidGoldMagikarp token for one interesting example[^solidgoldmagikarp]).
 
 ## Attention
 ---
@@ -119,7 +72,7 @@ This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{so
 ## Low Precision
 ---
 
-This section covers efforts to reduce the numerical precision of various parts of Modded NanoGPT / NanoChat.
+Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
 
 ### FP8 Head
 
@@ -128,6 +81,47 @@ Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, 
 ### Full FP8
 
 NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
+
+## Modernized Architecture
+---
+
+This section includes architectural modifications that are already relatively well-known, and are implemented in both Modded NanoGPT and NanoChat with minimal adjustments. Additionally, many of these adjustments are fairly standard in modern open-source LLMs. In that sense, the modifications in this section can be considered to be bringing Modded NanoGPT and NanoChat up to speed with modern Transformer implementations.
+
+### Pre-Norm
+
+Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, placing them at the start of each sub-block (attention / MLP). This controls the gradient norm and increases training stability. This was also used in GPT-2[^gpt2], along with many other models.
+
+### QKNorm
+
+QKNorm[^qknorm] normalizes each query vector $q_i$ and key vector $k_j$ after splitting along the head dimension and applying RoPE. While the original QKNorm paper uses the $\ell_2$-norm, both NanoChat and Modded NanoGPT apply RMSNorm instead. The primary benefit of this improvement is stopping the softmaxes in the attention computation from being easily saturated by large key or query vectors, allowing for more diverse attention patterns. This also improves training by stopping the attention gradients from growing extremely small. However, one disadvantage of this approach is that it can lead to the model not being able to sufficiently "focus" on important tokens, which has led to some later efforts to tweak the attention scale[^attentionscale].
+
+### RMSNorm
+
+RMSNorm[^rmsnorm] normalizes all input vectors $\mathbf{a}$ according to the formula
+
+$$\overline{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})} g_i$$
+
+Where $a_i$ is the $i$-th value of $\mathbf{a}$, $g_i$ is a learnable gain parameter, and RMS is the root mean square of the relevant vector. Both Modded NanoGPT and NanoChat also drop the gain parameter $g_i$, yielding
+
+$$\overline{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})}$$
+
+### RoPE
+
+Rotary Position Embeddings[^rope] adds positional information to the query and key vectors before performing the attention computation, rather than adding positional information when constructing the initial hidden state. More specifically, RoPE rotates pairs of dimensions in the query and key vectors based on each token's position and the rotation speed for that dimension pair.
+
+### ReLU²
+
+The ReLU² activation function[^relu2] has been previously shown to strike a good balance between having high sparsity and good performance[^relu2wins]. ReLU² is defined as
+
+$$\text{ReLU}^2(x) = \max(0, x)^2$$
+
+Many modern LLMs instead use SwiGLU[^swiglu] as their activation function. This was tested in NanoChat on several scales, but consistently gave decreased performance.
+
+### Untied Embeddings
+
+The original NanoGPT had tied embeddings, where the LM head matrix is the transpose of the input embedding matrix (as recommended by[^tiedembeddings]). Both Modded NanoGPT and NanoChat untied these matrices, which is common in modern LLMs. One of the reasons why untying is likely to be beneficial in this case is because it increases the parameter count without causing a corresponding increase in the number of FLOPs per pass.
+
+As a side note, tied embeddings can cause some unexpected issues (see Neel Nanda on the SolidGoldMagikarp token for one interesting example[^solidgoldmagikarp]).
 
 ## Muon
 ---
@@ -147,7 +141,7 @@ Both Modded NanoGPT and NanoChat gradually increase the momentum used for Muon f
 ## Skip Connections & Value Embeddings
 ---
 
-## Value Embeddings
+### Value Embeddings
 
 Value residual learning[^valueresiduallearning] proposes modifying the computed value matrix $V_n$ on layer $n$ according to the formula
 
