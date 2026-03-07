@@ -20,84 +20,23 @@ Since then, Modded NanoGPT has gone from taking 45 minutes to train a model equi
 
 This post covers some of the most impactful upgrades used in both speedruns, with the goal of showing how model training got so fast.
 
-## Fast Training for Dummies
+## Muon
 ---
 
-This writeup discusses a lot of different optimizations. But which ones give the largest impact? In approximate order of impact for speedrunning:
+Muon[^muon] is an optimizer designed for the 2D parameter matrices of neural networks, and is used in both Modded NanoGPT and NanoChat. Notably, Muon has proven to be very effective even for larger models. For example, Moonlight[^moonlight] estimates that Muon gives approximately 2x computational efficiency when compared to AdamW. For parameters that are not neural net parameter matrices, both NanoGPT and NanoChat use AdamW instead. Muon uses standard stochastic gradient descent with momentum, but orthogonalizes the update matrix using a Newton-Schulz iteration to orthogonalize the update matrix. Why does this help so much? The original Muon blog post[^muon] conjectures that
+> The updates produced by both SGD-momentum and Adam for the 2D parameters in transformer-based neural networks typically have very high condition number. That is, they are almost low-rank matrices, with the updates for all neurons being dominated by just a few directions. We speculate that orthogonalization effectively increases the scale of other “rare directions” which have small magnitude in the update but are nevertheless important for learning.
 
-1. Switch to using the Muon optimizer with the improvements discussed in the [Muon section](#muon), and properly tune its hyperparameters
-1. Apply all the modifications in the [Modernized Architecture section](#modernized-architecture)
-1. Update PyTorch to the latest version and use the [latest FlashAttention release](#flashattention) for your attention computation
-1. Use a high-quality dataset, like [Nemotron-ClimbMix](#climbmix)
-1. Check all your tensors to make sure that their dimensions are multiples of a [sufficiently large power of two](#aligning-to-multiples-of-64)
-1. Try using [value embeddings](#value-embeddings)
-1. Apply a [soft cap to your logits](#logit-soft-capping)
-1. Alternate between [short attention windows and long attention windows](#sliding-window-attention)
-1. Shift your model's linear layers [to use FP8](#full-fp8)
+Modded NanoGPT and NanoChat use an efficient distributed version of Muon that distributes the Newton-Schulz iteration over multiple GPUs[^distributedmuon].
 
-This writeup covers many other interesting optimizations, but these are a good place to start. Also, this post is by no means exhaustive, and the Modded NanoGPT[^nanogpt] and NanoChat[^nanochat] repositories contain tons of great optimizations that may be of interest.
+### Cautious Weight Decay
 
-Finally, note that many of these improvements may have smaller (or even detrimental) effects on larger models. Where possible, I try to point out when these techniques have been used in more modern LLMs.
+Cautious weight decay[^cautiousweightdecay] only applies weight decay when the update and the weight have the same sign ($\text{update} \times \text{weight} > 0$). The intuition for this is that if the signs are different, then the update is already pulling the weight back towards zero. Both Modded NanoGPT and NanoChat use cautious weight decay. One slight difference between the two is that Modded NanoGPT uses cautious weight decay for Adam as well, while NanoChat has no weight decay for Adam.
 
-## Attention
----
+### Momentum Warmup
 
-This section covers various improvements to the attention mechanism, mainly along two lines:
+Both Modded NanoGPT and NanoChat gradually increase the momentum used for Muon from 0.85 to 0.95. The intuition for this is that the loss landscape changes more rapidly early on, so lower momentum is desirable[^momentumwarmup].
 
-1. Moving to more optimized implementations of the attention computation
-2. Alterations to the size of the attention window
-
-### FlashAttention
-
-The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use FlashAttention 3.
-
-### Sliding Window Attention
-
-Both Modded NanoGPT and NanoChat use a short-long pattern for attention windows, where there are several short-window attention layers, followed by one long-window layer. Both Modded NanoGPT and NanoChat use a repeating SSSL pattern, where there are three short windows followed by a long window that is twice the length. However, the final layer is forced to always be a long window. This pattern is slightly altered for Modded NanoGPT, due to there being only 11 layers, so Modded NanoGPT only uses long-window attention on layers 4 and 11.
-
-A similar method of alternating short and long attention windows was used in GPT-3[^gpt3].
-
-### Attention Window Warmup
-
-Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
-
-## ClimbMix
----
-
-While Modded NanoGPT does not allow changing the training data, NanoChat has experimented with several different training datasets, eventually settling on Nemotron-ClimbMix[^climbmix]. ClimbMix was created through the following procedure:
-1. Begin with data from:
-* Nemotron-CC[^nemotroncc], which filters Common Crawl[^commoncrawl] data for the highest-quality data
-* SmolLM-Corpus[^smollm], a mixture of general educational data from FineWeb-Edu[^fineweb], programming data from The Stack[^thestack], and synthetic data
-1. Cluster the data, creating 21 semantic clusters that cover a variety of different topics
-1. Using a small model, learn the optimal data mixture for performance on downstream tasks
-
-This results in a high-quality dataset that appropriately weights the frequency of various topics.
-
-Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
-
-## Logit Soft-Capping
----
-
-Gemma 2[^gemma2] applies a soft cap to logits, using the following formula
-
-$$\text{logits} \gets \text{soft_cap} \cdot \tanh\!\left(\frac{\text{logits}}{\text{soft_cap}}\right)$$
-
-This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{soft\_cap}]$. Both Modded NanoGPT and NanoChat implement this soft cap with $\text{soft\_cap} = 15$. However, they only use the soft cap for the LM head, while Gemma 2 applies it to the attention logits as well. It is likely that the optimal value of the softcap would be larger for larger models, since the ability to express increased confidence would become more useful.
-
-## Low Precision
----
-
-Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
-
-### FP8 Head
-
-Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
-
-### Full FP8
-
-NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
-
-## Modernized Architecture
+## Architectural Modernizations
 ---
 
 This section includes architectural modifications that are already relatively well-known, and are implemented in both Modded NanoGPT and NanoChat with minimal adjustments. Additionally, many of these adjustments are fairly standard in modern open-source LLMs. In that sense, the modifications in this section can be considered to be bringing Modded NanoGPT and NanoChat up to speed with modern Transformer implementations.
@@ -138,20 +77,54 @@ The original NanoGPT had tied embeddings, where the LM head matrix is the transp
 
 As a side note, tied embeddings can cause some unexpected issues (see Neel Nanda on the SolidGoldMagikarp token for one interesting example[^solidgoldmagikarp]).
 
-## Muon
+## Attention
 ---
 
-Muon[^muon] is an optimizer designed for the 2D parameter matrices of neural networks, and is used in both Modded NanoGPT and NanoChat. Notably, Muon has proven to be very effective even for larger models. For example, Moonlight[^moonlight] estimates that Muon gives approximately 2x computational efficiency when compared to AdamW. For parameters that are not neural net parameter matrices, both NanoGPT and NanoChat use AdamW instead. Muon uses standard stochastic gradient descent with momentum, but orthogonalizes the update matrix using a Newton-Schulz iteration.
+This section covers various improvements to the attention mechanism, mainly along two lines:
 
-Modded NanoGPT and NanoChat also use an efficient distributed version of Muon that distributes the Newton-Schulz iteration over multiple GPUs[^distributedmuon].
+1. Moving to more optimized implementations of the attention computation
+2. Alterations to the size of the attention window
 
-### Cautious Weight Decay
+### FlashAttention
 
-Cautious weight decay[^cautiousweightdecay] only applies weight decay when the update and the weight have the same sign ($\text{update} \times \text{weight} > 0$). The intuition for this is that if the signs are different, then the update is already pulling the weight back towards zero. Both Modded NanoGPT and NanoChat use cautious weight decay. One slight difference between the two is that Modded NanoGPT uses cautious weight decay for Adam as well, while NanoChat has no weight decay for Adam.
+The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use FlashAttention 3.
 
-### Momentum Warmup
+### Sliding Window Attention
 
-Both Modded NanoGPT and NanoChat gradually increase the momentum used for Muon from 0.85 to 0.95. The intuition for this is that the loss landscape changes more rapidly early on, so lower momentum is desirable[^momentumwarmup].
+Both Modded NanoGPT and NanoChat use a short-long pattern for attention windows, where there are several short-window attention layers, followed by one long-window layer. Both Modded NanoGPT and NanoChat use a repeating SSSL pattern, where there are three short windows followed by a long window that is twice the length. However, the final layer is forced to always be a long window. This pattern is slightly altered for Modded NanoGPT, due to there being only 11 layers, so Modded NanoGPT only uses long-window attention on layers 4 and 11.
+
+A similar method of alternating short and long attention windows was used in GPT-3[^gpt3].
+
+### Attention Window Warmup
+
+Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
+
+## ClimbMix
+---
+
+While Modded NanoGPT does not allow changing the training data, NanoChat has experimented with several different training datasets, eventually settling on Nemotron-ClimbMix[^climbmix]. ClimbMix was created through the following procedure:
+1. Begin with data from:
+* Nemotron-CC[^nemotroncc], which filters Common Crawl[^commoncrawl] data for the highest-quality data
+* SmolLM-Corpus[^smollm], a mixture of general educational data from FineWeb-Edu[^fineweb], programming data from The Stack[^thestack], and synthetic data
+1. Cluster the data, creating 21 semantic clusters that cover a variety of different topics
+1. Using a small model, learn the optimal data mixture for performance on downstream tasks
+
+This results in a high-quality dataset that appropriately weights the frequency of various topics.
+
+Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
+
+## Low Precision
+---
+
+Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
+
+### FP8 Head
+
+Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
+
+### Full FP8
+
+NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
 
 ## Skip Connections & Value Embeddings
 ---
@@ -179,7 +152,7 @@ Both Modded NanoGPT and NanoChat use value embeddings. However, they structure t
 
 Value embeddings seem to be particularly helpful for model speedrunning because they add a large number of parameters without causing a correspondingly large increase in the number of FLOPs per token.
 
-### Embedding Residual Connections
+### Hidden State Residual Connections
 
 Modded NanoGPT also adds skip connections for the hidden state[^valueresiduallearningvariant], updating the hidden state at the start of layer $n$ according to
 
@@ -192,6 +165,15 @@ This was later modified to use a U-Net style architecture[^unet], adding connect
 $$X'_n = \lambda_{n,1} \cdot X_n + \lambda_{n,2} \cdot X_1 + \lambda_{n,3} \cdot X_k$$
 
 This change was only made for $n > \frac{\text{layers}}{2}$, with $k = \text{layers} - n + 1$. For example, with the 12 layer architecture used at the time, only layers 7 through 12 would use this updated formula. Layer 6 would feed into 7, 5 into 8, and so on, up to 1 into 12.
+
+## Logit Soft-Capping
+---
+
+Gemma 2[^gemma2] applies a soft cap to logits, using the following formula
+
+$$\text{logits} \gets \text{soft_cap} \cdot \tanh\!\left(\frac{\text{logits}}{\text{soft_cap}}\right)$$
+
+This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{soft\_cap}]$. Both Modded NanoGPT and NanoChat implement this soft cap with $\text{soft\_cap} = 15$. However, they only use the soft cap for the LM head, while Gemma 2 applies it to the attention logits as well. It is likely that the optimal value of the softcap would be larger for larger models, since the ability to express increased confidence would become more useful.
 
 ## Miscellaneous Improvements
 ---
@@ -214,6 +196,19 @@ Some other writeups and resources that may be of use:
 - The Modded NanoGPT README (primarily maintained by Keller Jordan and Larry Dial)[^nanogptreadme] covers the various speedrun world records and their associated improvements.
 - Larry Dial's writeup *How the NanoGPT Speedrun WR dropped by 20% in 3 months* [^speedrunlatest] covers many of the more recent modifications to Modded NanoGPT (roughly covering the July–October range).
 - Varun Srivastava's writeup *Muon in Modded NanoGPT* [^muonimprovementwriteup] covers many of the improvements made to Muon for the Modded NanoGPT speedrun.
+
+If you found this post useful, please cite it as:
+```bibtex
+@article{conway2026,
+  title   = {NanoGPT Speedrunning},
+  author  = {Evan Conway},
+  year    = {2026},
+  month   = {Mar},
+  url     = {https://evanjayconway.com/posts/2026/nanogpt-improvements/}
+}
+```
+
+**TODO**: fix this citatation
 
 ## References
 ---
