@@ -7,6 +7,11 @@ description: Improvements to the NanoGPT and NanoChat speedruns
 bibliography: nanogpt-improvements.bib
 toc:
   sidebar: left
+
+_styles: >
+    h3 {
+        font-size: 1.5rem;
+    }
 ---
 
 ## Fast Training for Dummies
@@ -27,19 +32,19 @@ This writeup discusses a lot of different optimizations. But which ones give the
 
 This section includes architectural modifications that are already relatively well-known, and are implemented in both Modded NanoGPT and NanoChat with minimal adjustments. Additionally, many of these adjustments are fairly standard in modern open-source LLMs. In that sense, the modifications in this section can be considered to be bringing Modded NanoGPT and NanoChat up to speed with modern Transformer implementations.
 
-#### Pre-Norm
+### Pre-Norm
 
 Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, placing them at the start of each sub-block (attention / MLP). This controls the gradient norm and increases training stability. This was also used in GPT-2[^gpt2], along with many other models.
 
 **TODO: add figure showing the move**
 
-#### QKNorm
+### QKNorm
 
 QKNorm[^qknorm] normalizes each query vector $q_i$ and key vector $k_j$ after splitting along the head dimension and applying RoPE. While the original QKNorm paper uses the $\ell_2$-norm, both NanoChat and Modded NanoGPT apply RMSNorm instead. The primary benefit of this improvement is stopping the softmaxes in the attention computation from being easily saturated by large key or query vectors. This also improves training by stopping the attention gradients from growing extremely small. However, one disadvantage of this approach is that it can lead to the model not being able to sufficiently "focus" on important tokens[^attentionscale].
 
 **TODO: add Figures 1 and 2 from QK-Norm paper**
 
-#### RMSNorm
+### RMSNorm
 
 RMSNorm[^rmsnorm] normalizes all input vectors $\mathbf{a}$ according to the formula
 
@@ -49,13 +54,13 @@ Where $a_i$ is the $i$-th value of $\mathbf{a}$, $g_i$ is a learnable gain param
 
 $$\overline{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})}$$
 
-#### RoPE
+### RoPE
 
 Rotary Position Embedding[^rope] adds positional information to the query and key vectors before performing the attention computation. More specifically, RoPE rotates pairs of dimensions in the query and key vectors based on that token's position and the rotation speed for that dimension pair.
 
 **TODO: feel like I should add more here**
 
-#### ReLU²
+### ReLU²
 
 The ReLU² activation function[^relu2] has been previously shown to strike a good balance between having high sparsity and good performance[^relu2wins]. ReLU² is defined as
 
@@ -63,7 +68,7 @@ $$\text{ReLU}^2(x) = \max(0, x)^2$$
 
 Many modern LLMs instead use SwiGLU[^swiglu] as their activation function. This was tested in NanoChat on several scales, but consistently gave decreased performance.
 
-#### Untied Embeddings
+### Untied Embeddings
 
 The original NanoGPT had tied embeddings, where the LM head matrix is the transpose of the input embedding matrix (as recommended by[^tiedembeddings]). Both Modded NanoGPT and NanoChat untied these matrices. One of the reasons why untying is likely to be beneficial in this case is because it increases the parameter count without causing a corresponding increase in the number of FLOPs per pass.
 
@@ -77,19 +82,19 @@ This section covers various improvements to the attention mechanism, mainly alon
 1. Moving to more optimized implementations of the attention computation
 2. Alterations to the size of the attention window
 
-#### FlashAttention
+### FlashAttention
 
 The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use the latest version, FlashAttention 3.
 
 **TODO: update to FlashAttention 4?**
 
-#### Sliding Window Attention
+### Sliding Window Attention
 
 Both Modded NanoGPT and NanoChat use a short-long pattern for attention windows, where there are several short-window attention layers, followed by one long-window layer. Both Modded NanoGPT and NanoChat use a repeating SSSL pattern, where there are three short windows followed by a long window that is twice the length. However, the final layer is forced to always be a long window. This pattern is slightly altered for Modded NanoGPT, due to there being only 11 layers, so Modded NanoGPT only uses long-window attention on layers 4 and 11.
 
 A similar method of alternating short and long attention windows was used in GPT-3[^gpt3].
 
-#### Attention Window Warmup
+### Attention Window Warmup
 
 Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
 
@@ -107,11 +112,11 @@ This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{so
 
 This section covers efforts to reduce the numerical precision of various parts of Modded NanoGPT / NanoChat.
 
-#### FP8 Head
+### FP8 Head
 
 Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
 
-#### Full FP8
+### Full FP8
 
 NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
 
@@ -122,18 +127,18 @@ Muon[^muon] is an optimizer designed for the 2D parameter matrices of neural net
 
 Modded NanoGPT and NanoChat also use an efficient distributed version of Muon that distributes the Newton-Schulz iteration over multiple GPUs[^distributedmuon].
 
-#### Cautious Weight Decay
+### Cautious Weight Decay
 
 Cautious weight decay[^cautiousweightdecay] only applies weight decay when the update and the weight have the same sign ($\text{update} \times \text{weight} > 0$). The intuition for this is that if the signs are different, then the update is already pulling the weight back towards zero. Both Modded NanoGPT and NanoChat use cautious weight decay. One slight difference between the two is that Modded NanoGPT uses cautious weight decay for Adam as well, while NanoChat has no weight decay for Adam.
 
-#### Momentum Warmup
+### Momentum Warmup
 
 Both Modded NanoGPT and NanoChat gradually increase the momentum used for Muon from 0.85 to 0.95. The intuition for this is that the loss landscape changes more rapidly early on, so lower momentum is desirable[^momentumwarmup].
 
 ## Skip Connections
 ---
 
-#### Value Embeddings
+### Value Embeddings
 
 Value residual learning[^valueresiduallearning] proposes modifying the computed value matrix $V_n$ on layer $n$ according to the formula
 
@@ -156,7 +161,7 @@ Both Modded NanoGPT and NanoChat use value embeddings. However, they structure t
 
 Value embeddings seem to be particularly helpful for model speedrunning because they add a large number of parameters without causing a correspondingly large increase in the number of FLOPs per token.
 
-#### Embedding Residual Connections
+### Embedding Residual Connections
 
 Modded NanoGPT also adds skip connections for the hidden state[^valueresiduallearningvariant], updating the hidden state at the start of layer $n$ according to
 
@@ -173,11 +178,11 @@ This change was only made for $n > \frac{\text{layers}}{2}$, with $k = \text{lay
 ## Miscellaneous Improvements
 ---
 
-#### Aligning to Multiples of 64
+### Aligning to Multiples of 64
 
 Both Modded NanoGPT and NanoChat inherit padded embeddings from the original NanoGPT. While the original NanoGPT had a vocabulary size of 50,257, padding to the next multiple of 64 (50,304) gave a major speedup[^powersof64]. In general, it is important to make sure that matrix dimensions are multiples of a sufficiently large power of 2 (16, 32, 64, 128, etc).
 
-#### Zero-Initialized Output Layers
+### Zero-Initialized Output Layers
 
 In appendix D.2, *Tensor Programs V* [^tensorprogramsv] suggests initializing output layers as zero, which makes the optimal hyperparameters for different model sizes match more closely. Both Modded NanoGPT and NanoChat follow this recommendation by initializing the final attention projection layer as zero and initializing the output layer of all MLPs as zero. Interestingly, this gives a speedup on Modded NanoGPT, despite *Tensor Programs V* only recommending it as a way to improve hyperparameter transfer, and simply noting that "we do not find this modification to be detrimental to performance".
 
