@@ -2,7 +2,7 @@
 layout: post
 title: Speedrunning GPT-2 Training for Fun and Profit
 date: 2026-03-07
-description: Improvements to the NanoGPT and NanoChat speedruns
+description: A Field Guide to NanoGPT Speedrun Optimizations
 
 bibliography: nanogpt-improvements.bib
 toc:
@@ -18,7 +18,7 @@ Near the end of 2022, [Andrej Karpathy](https://karpathy.ai/) released NanoGPT[^
 
 Since then, Modded NanoGPT has gone from taking 45 minutes to train a model equivalent to GPT-2 Small to taking less than 90 seconds. Using a similar setup, Andrej Karpathy's NanoGPT successor, NanoChat[^nanochat], has reduced the time needed to train a GPT-2 XL level model from 168 hours to around 2 hours. These improvements have massively changed the economics of small-model training, making it possible to train a fully functional model for only around $50.
 
-This post covers some of the most impactful upgrades used in both speedruns, with the goal of showing how model training got so fast.
+This post covers some of the most interesting and impactful upgrades used in both speedruns, with the goal of showing how model training got so fast.
 
 ## Muon
 ---
@@ -159,13 +159,9 @@ Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common
 
 Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
 
-### FP8 Head
-
 Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
 
-### Full FP8
-
-NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
+Instead, NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
 
 ## Skip Connections & Value Embeddings
 ---
@@ -241,7 +237,7 @@ Some other writeups and resources that may be of use:
 If you found this post useful, please cite it as:
 ```bibtex
 @article{conway2026,
-  title   = {NanoGPT Speedrunning},
+  title   = {A Field Guide to NanoGPT Speedrun Optimizations},
   author  = {Evan Conway},
   year    = {2026},
   month   = {Mar},
