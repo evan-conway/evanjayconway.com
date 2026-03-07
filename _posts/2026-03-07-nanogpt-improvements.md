@@ -143,6 +143,15 @@ While Modded NanoGPT does not allow changing the training data, NanoChat has exp
 
 This results in a high-quality dataset that appropriately weights the frequency of various topics.
 
+<div class="row mt-3 justify-content-center">
+    <div class="col-sm-10 mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/topic_clusters.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+<div class="caption">
+    Nemotron-ClimbMix topic clusters. Figure from <a href="https://arxiv.org/pdf/2504.13161#page=17">Diao et al</a>.
+</div>
+
 Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
 
 ## Low Precision
