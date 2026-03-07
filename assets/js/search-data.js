@@ -23,11 +23,11 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/publications/";
           },
-        },{id: "post-speedrunning-gpt-2-training-for-fun-and-profit",
+        },{id: "post-a-field-guide-to-nanogpt-speedrun-optimizations",
         
-          title: "Speedrunning GPT-2 Training for Fun and Profit",
+          title: "A Field Guide to NanoGPT Speedrun Optimizations",
         
-        description: "A Field Guide to NanoGPT Speedrun Optimizations",
+        description: "Improvements to the NanoGPT and NanoChat speedruns",
         section: "Posts",
         handler: () => {
           
