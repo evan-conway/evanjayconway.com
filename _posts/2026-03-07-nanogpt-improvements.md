@@ -1,6 +1,6 @@
 ---
 layout: post
-title: NanoGPT Speedrun Improvements
+title: Speedrunning GPT-2 Training for Fun and Profit
 date: 2026-03-07
 description: Improvements to the NanoGPT and NanoChat speedruns
 
@@ -14,18 +14,29 @@ _styles: >
     }
 ---
 
+Near the end of 2022, [Andrej Karpathy](https://karpathy.ai/) released NanoGPT[^nanogpt], a small, hackable GPT. A few years later, [Keller Jordan](https://kellerjordan.github.io/) forked off the Modded NanoGPT[^nanogptreadme] repository and launched the NanoGPT speedrun, which sought to improve NanoGPT's training speed on a single 8xH100 node as much as possible.
+
+Since then, Modded NanoGPT has gone from taking 45 minutes to train a model equivalent to GPT-2 Small to taking less than 90 seconds. Using a similar setup, Andrej Karpathy's NanoGPT successor, NanoChat[^nanochat], has reduced the time needed to train a GPT-2 XL level model from 168 hours to around 2 hours. These improvements have massively changed the economics of small-model training, making it possible to train a fully functional model for only around $50.
+
+This post covers some of the most impactful upgrades used in both speedruns, with the goal of showing how model training got so fast.
+
 ## Fast Training for Dummies
 ---
 
-This writeup discusses a lot of different optimizations. But which ones give the largest impact? In approximate order of impact:
+This writeup discusses a lot of different optimizations. But which ones give the largest impact? In approximate order of impact for speedrunning:
 
-1. Switch to using the Muon optimizer with the improvements discussed in the Muon section
-2. Apply all the modifications in the Architectural Modernizations section
-3. Update PyTorch to the latest version and use the latest FlashAttention release for your attention computation
-4. Check all your tensors to make sure that their dimensions are multiples of a sufficiently large power of two
-5. Tune your learning rate
-6. Apply a soft cap to your logits, as described in the Logit Soft-Capping section
-7. Shift your model's linear layers to use FP8, as discussed in the Low Precision section
+1. Switch to using the Muon optimizer with the improvements discussed in the [Muon section](#muon), and properly tune its hyperparameters
+1. Apply all the modifications in the [Architectural Modernizations section](#architectural-modernizations)
+1. Update PyTorch to the latest version and use the [latest FlashAttention release](#flashattention) for your attention computation
+1. Check all your tensors to make sure that their dimensions are multiples of a [sufficiently large power of two](#aligning-to-multiples-of-64)
+1. Try using [value embeddings](#value-embeddings)
+1. Apply a [soft cap to your logits](#logit-soft-capping)
+1. Alternate between [short attention windows and long attention windows](#sliding-window-attention)
+1. Shift your model's linear layers [to use FP8](#full-fp8)
+
+This writeup covers many other interesting optimizations, but these are a good place to start. Also, this post is by no means exhaustive, and the Modded NanoGPT[^nanogpt] and NanoChat[^nanochat] repositories contain tons of great optimizations that may be of interest.
+
+Also note that many of these improvements may have smaller (or even detrimental) effects on larger models. Where possible, I try to point out when these techniques have been used in more modern LLMs.
 
 ## Architectural Modernizations
 ---
@@ -70,7 +81,7 @@ Many modern LLMs instead use SwiGLU[^swiglu] as their activation function. This 
 
 ### Untied Embeddings
 
-The original NanoGPT had tied embeddings, where the LM head matrix is the transpose of the input embedding matrix (as recommended by[^tiedembeddings]). Both Modded NanoGPT and NanoChat untied these matrices. One of the reasons why untying is likely to be beneficial in this case is because it increases the parameter count without causing a corresponding increase in the number of FLOPs per pass.
+The original NanoGPT had tied embeddings, where the LM head matrix is the transpose of the input embedding matrix (as recommended by[^tiedembeddings]). Both Modded NanoGPT and NanoChat untied these matrices, which is common in modern LLMs. One of the reasons why untying is likely to be beneficial in this case is because it increases the parameter count without causing a corresponding increase in the number of FLOPs per pass.
 
 As a side note, tied embeddings can cause some unexpected issues (see Neel Nanda on the SolidGoldMagikarp token for one interesting example[^solidgoldmagikarp]).
 
@@ -84,9 +95,7 @@ This section covers various improvements to the attention mechanism, mainly alon
 
 ### FlashAttention
 
-The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use the latest version, FlashAttention 3.
-
-**TODO: update to FlashAttention 4?**
+The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use FlashAttention 3.
 
 ### Sliding Window Attention
 
@@ -135,10 +144,10 @@ Cautious weight decay[^cautiousweightdecay] only applies weight decay when the u
 
 Both Modded NanoGPT and NanoChat gradually increase the momentum used for Muon from 0.85 to 0.95. The intuition for this is that the loss landscape changes more rapidly early on, so lower momentum is desirable[^momentumwarmup].
 
-## Skip Connections
+## Skip Connections & Value Embeddings
 ---
 
-### Value Embeddings
+## Value Embeddings
 
 Value residual learning[^valueresiduallearning] proposes modifying the computed value matrix $V_n$ on layer $n$ according to the formula
 
@@ -229,6 +238,10 @@ Some other writeups and resources that may be of use:
 [^muonimprovementwriteup]: Srivastava 2025, [*Muon in Modded NanoGPT*](https://varunneal.github.io/essays/muon)
 
 [^speedrunlatest]: Dial 2025, [*How the NanoGPT Speedrun WR dropped by 20% in 3 months*](https://www.lesswrong.com/posts/j3gp8tebQiFJqzBgg/how-the-nanogpt-speedrun-wr-dropped-by-20-in-3-months)
+
+[^nanogpt]: Karpathy 2022, [*nanoGPT*](https://github.com/karpathy/nanoGPT)
+
+[^nanochat]: Karpathy 2025, [*nanochat: The best ChatGPT that $100 can buy*](https://github.com/karpathy/nanochat)
 
 [^nanochatannouncement]: Karpathy 2026, [*Beating GPT-2 for <<$100: the nanochat journey*](https://github.com/karpathy/nanochat/discussions/481)
 
