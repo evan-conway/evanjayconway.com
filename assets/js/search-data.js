@@ -27,7 +27,7 @@ ninja.data = [{
         
           title: "Speedrunning GPT-2 Training for Fun and Profit",
         
-        description: "Improvements to the NanoGPT and NanoChat speedruns",
+        description: "A Field Guide to NanoGPT Speedrun Optimizations",
         section: "Posts",
         handler: () => {
           
