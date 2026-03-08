@@ -36,6 +36,60 @@ Cautious weight decay[^cautiousweightdecay] only applies weight decay when the u
 
 Both Modded NanoGPT and NanoChat gradually increase the momentum used for Muon from 0.85 to 0.95. The intuition for this is that the loss landscape changes more rapidly early on, so lower momentum is desirable[^momentumwarmup].
 
+## Attention
+---
+
+This section covers various improvements to the attention mechanism, mainly along two lines:
+
+1. Moving to more optimized implementations of the attention computation
+2. Alterations to the size of the attention window
+
+### FlashAttention
+
+The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use FlashAttention 3.
+
+### Sliding Window Attention
+
+Both Modded NanoGPT and NanoChat use a short-long pattern for attention windows, where there are several short-window attention layers, followed by one long-window layer. Both Modded NanoGPT and NanoChat use a repeating SSSL pattern, where there are three short windows followed by a long window that is twice the length. However, the final layer is forced to always be a long window. This pattern is slightly altered for Modded NanoGPT, due to there being only 11 layers, so Modded NanoGPT only uses long-window attention on layers 4 and 11.
+
+A similar method of alternating short and long attention windows was used in GPT-3[^gpt3].
+
+### Attention Window Warmup
+
+Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
+
+<div class="row mt-3 justify-content-center">
+    <div class="col-sm-10 mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/attention_window_size.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+<div class="caption">
+    An example of alternating attention window lengths, with window length increasing over time. Figure by <a href="https://x.com/leloykun/status/1880301758154698958">Franz Louis Cesista</a>.
+</div>
+
+## ClimbMix
+---
+
+While Modded NanoGPT does not allow changing the training data, NanoChat has experimented with several different training datasets, eventually settling on Nemotron-ClimbMix[^climbmix]. ClimbMix was created through the following procedure:
+1. Begin with data from:
+* Nemotron-CC[^nemotroncc], which filters Common Crawl[^commoncrawl] data for the highest-quality data
+* SmolLM-Corpus[^smollm], a mixture of general educational data from FineWeb-Edu[^fineweb], programming data from The Stack[^thestack], and synthetic data
+1. Cluster the data, creating 21 semantic clusters that cover a variety of different topics
+1. Using a small model, learn the optimal data mixture for performance on downstream tasks
+
+This results in a high-quality dataset that appropriately weights the frequency of various topics.
+
+<div class="row mt-3 justify-content-center">
+    <div class="col-sm-10 mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/topic_clusters.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+    </div>
+</div>
+<div class="caption">
+    Nemotron-ClimbMix topic clusters. Figure from <a href="https://arxiv.org/pdf/2504.13161#page=17">Diao et al</a>.
+</div>
+
+Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
+
 ## Architectural Modernizations
 ---
 
@@ -100,69 +154,6 @@ The original NanoGPT had tied embeddings, where the LM head matrix is the transp
 
 As a side note, tied embeddings can cause some unexpected issues (see Neel Nanda on the SolidGoldMagikarp token for one interesting example[^solidgoldmagikarp]).
 
-## Attention
----
-
-This section covers various improvements to the attention mechanism, mainly along two lines:
-
-1. Moving to more optimized implementations of the attention computation
-2. Alterations to the size of the attention window
-
-### FlashAttention
-
-The FlashAttention series of optimized attention implementations gives a major speedup to attention computations[^flashattention] [^flashattention2] [^flashattention3]. Both Modded NanoGPT and NanoChat use FlashAttention 3.
-
-### Sliding Window Attention
-
-Both Modded NanoGPT and NanoChat use a short-long pattern for attention windows, where there are several short-window attention layers, followed by one long-window layer. Both Modded NanoGPT and NanoChat use a repeating SSSL pattern, where there are three short windows followed by a long window that is twice the length. However, the final layer is forced to always be a long window. This pattern is slightly altered for Modded NanoGPT, due to there being only 11 layers, so Modded NanoGPT only uses long-window attention on layers 4 and 11.
-
-A similar method of alternating short and long attention windows was used in GPT-3[^gpt3].
-
-### Attention Window Warmup
-
-Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
-
-<div class="row mt-3 justify-content-center">
-    <div class="col-sm-10 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/attention_window_size.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="caption">
-    An example of alternating attention window lengths, with window length increasing over time. Figure by <a href="https://x.com/leloykun/status/1880301758154698958">Franz Louis Cesista</a>.
-</div>
-
-## ClimbMix
----
-
-While Modded NanoGPT does not allow changing the training data, NanoChat has experimented with several different training datasets, eventually settling on Nemotron-ClimbMix[^climbmix]. ClimbMix was created through the following procedure:
-1. Begin with data from:
-* Nemotron-CC[^nemotroncc], which filters Common Crawl[^commoncrawl] data for the highest-quality data
-* SmolLM-Corpus[^smollm], a mixture of general educational data from FineWeb-Edu[^fineweb], programming data from The Stack[^thestack], and synthetic data
-1. Cluster the data, creating 21 semantic clusters that cover a variety of different topics
-1. Using a small model, learn the optimal data mixture for performance on downstream tasks
-
-This results in a high-quality dataset that appropriately weights the frequency of various topics.
-
-<div class="row mt-3 justify-content-center">
-    <div class="col-sm-10 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/topic_clusters.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="caption">
-    Nemotron-ClimbMix topic clusters. Figure from <a href="https://arxiv.org/pdf/2504.13161#page=17">Diao et al</a>.
-</div>
-
-Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
-
-## Low Precision
----
-
-Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
-
-Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
-
-Instead, NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
-
 ## Skip Connections & Value Embeddings
 ---
 
@@ -212,6 +203,15 @@ $$\text{logits} \gets \text{soft_cap} \cdot \tanh\!\left(\frac{\text{logits}}{\t
 
 This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{soft\_cap}]$. Both Modded NanoGPT and NanoChat implement this soft cap with $\text{soft\_cap} = 15$. However, they only use the soft cap for the LM head, while Gemma 2 applies it to the attention logits as well. It is likely that the optimal value of the softcap would be larger for larger models, since the ability to express increased confidence would become more useful.
 
+## Low Precision
+---
+
+Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
+
+Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
+
+Instead, NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
+
 ## Miscellaneous Improvements
 ---
 
@@ -244,8 +244,6 @@ If you found this post useful, please cite it as:
   url     = {https://evanjayconway.com/posts/2026/nanogpt-improvements/}
 }
 ```
-
-**TODO**: fix this citatation
 
 ## References
 ---
