@@ -18,7 +18,7 @@ Near the end of 2022, [Andrej Karpathy](https://karpathy.ai/) released NanoGPT[^
 
 Since then, Modded NanoGPT has gone from taking 45 minutes to train a model equivalent to GPT-2 Small to taking less than 90 seconds. Using a similar setup, Andrej Karpathy's NanoGPT successor, NanoChat[^nanochat], has reduced the time needed to train a GPT-2 XL level model from 168 hours to around 2 hours. These improvements have massively changed the economics of small-model training, making it possible to train a fully functional model for only around $50.
 
-This post covers some of the most interesting and impactful upgrades used in both speedruns, with the goal of showing how model training got so fast.
+This post covers some of the most interesting and impactful upgrades used in both speedruns, with the goal of showing how model training got so fast. These improvements are presented in (approximate) order of importance.
 
 ## Muon
 ---
@@ -148,7 +148,7 @@ The ReLU² activation function[^relu2] has been previously shown to strike a goo
 
 $$\text{ReLU}^2(x) = \max(0, x)^2$$
 
-Many modern LLMs instead use SwiGLU[^swiglu] as their activation function. This was tested in NanoChat on several scales, but consistently gave decreased performance.
+Many modern LLMs instead use SwiGLU[^swiglu] as their activation function. SwiGLU was tested in NanoChat on several scales, but consistently gave decreased performance.
 
 ### Untied Embeddings
 
