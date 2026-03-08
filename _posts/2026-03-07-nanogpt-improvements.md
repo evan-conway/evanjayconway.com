@@ -23,7 +23,7 @@ This post covers some of the most interesting and impactful upgrades used in bot
 ## Muon
 ---
 
-Muon[^muon] is an optimizer designed for the 2D parameter matrices of neural networks, and is used in both Modded NanoGPT and NanoChat. Notably, Muon has proven to be very effective even for larger models. For example, Moonlight[^moonlight] estimates that Muon gives approximately 2x computational efficiency when compared to AdamW. For parameters that are not neural net parameter matrices, both NanoGPT and NanoChat use AdamW instead. Muon uses standard stochastic gradient descent with momentum, but orthogonalizes the update matrix using a Newton-Schulz iteration to orthogonalize the update matrix. Why does this help so much? The original Muon blog post[^muon] conjectures that
+Muon[^muon] is an optimizer designed for the 2D parameter matrices of neural networks, and is used in both Modded NanoGPT and NanoChat. Notably, Muon has proven to be very effective even for larger models. For example, Moonlight[^moonlight] estimates that Muon gives approximately 2x computational efficiency when compared to AdamW. For parameters that are not neural net parameter matrices, both NanoGPT and NanoChat use AdamW instead. Muon uses standard stochastic gradient descent with momentum, but orthogonalizes the update matrix using a single Newton-Schulz iteration to orthogonalize the update matrix. Why does this help so much? The original Muon blog post[^muon] conjectures that
 > The updates produced by both SGD-momentum and Adam for the 2D parameters in transformer-based neural networks typically have very high condition number. That is, they are almost low-rank matrices, with the updates for all neurons being dominated by just a few directions. We speculate that orthogonalization effectively increases the scale of other “rare directions” which have small magnitude in the update but are nevertheless important for learning.
 
 Modded NanoGPT and NanoChat use an efficient distributed version of Muon that distributes the Newton-Schulz iteration over multiple GPUs[^distributedmuon].
@@ -136,9 +136,11 @@ Where $a_i$ is the $i$-th value of $\mathbf{a}$, $g_i$ is a learnable gain param
 
 $$\overline{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})}$$
 
+RMSNorm is a simpler and faster normalization method than LayerNorm[^layernorm], which was used in the original Transformer.
+
 ### RoPE
 
-Rotary Position Embeddings[^rope] adds positional information to the query and key vectors before performing the attention computation, rather than adding positional information when constructing the initial hidden state. More specifically, RoPE rotates pairs of dimensions in the query and key vectors based on each token's position and the rotation speed for that dimension pair.
+Rotary Position Embeddings[^rope] adds positional information to the query and key vectors before performing the attention computation, rather than adding positional information when constructing the initial hidden state. More specifically, RoPE rotates pairs of dimensions in the query and key vectors based on each token's position and the rotation speed for that dimension pair. RoPE helps models learn to include positional information without adding extra parameters.
 
 ### ReLU²
 
@@ -201,14 +203,16 @@ Gemma 2[^gemma2] applies a soft cap to logits, using the following formula
 
 $$\text{logits} \gets \text{soft_cap} \cdot \tanh\!\left(\frac{\text{logits}}{\text{soft_cap}}\right)$$
 
-This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{soft\_cap}]$. Both Modded NanoGPT and NanoChat implement this soft cap with $\text{soft\_cap} = 15$. However, they only use the soft cap for the LM head, while Gemma 2 applies it to the attention logits as well. It is likely that the optimal value of the softcap would be larger for larger models, since the ability to express increased confidence would become more useful.
+This limits the range of the logits to a range of $[-\text{soft\_cap}, +\text{soft\_cap}]$. One intuition for why this is helpful is that it limits the model's confidence; for small models, it is unlikely that they will be completely certain of the next token, so capping the logits stops them from expressing 100% certainty. This also helps with vanishing gradient issues.
+
+Both Modded NanoGPT and NanoChat implement this soft cap with $\text{soft\_cap} = 15$. However, they only use the soft cap for the LM head, while Gemma 2 applies it to the attention logits as well. It is likely that the optimal value of the softcap would be larger for larger models, since the ability to express increased confidence would become more useful.
 
 ## Low Precision
 ---
 
 Both Modded NanoGPT and NanoChat have attempted to reduce the precision of their models, but in different ways.
 
-Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit. One interesting observation from the NanoChat testing was that GPU memory increased by approximately 2GB for unknown reasons.
+Modded NanoGPT uses FP8 for the LM head only. This was also tested in NanoChat, but did not give a significant benefit.
 
 Instead, NanoChat uses FP8 for all linear layers, which gives a speedup of approximately 17% tokens per second during training, but takes more tokens to reach the same validation loss, resulting in the speedup being smaller overall (~5% speedup). This seems to give greater benefits for larger models, as testing full FP8 on smaller models made them slower overall. Full FP8 is most effective when using tensorwise scaling, rather than rowwise scaling.
 
@@ -247,6 +251,8 @@ If you found this post useful, please cite it as:
 
 ## References
 ---
+
+[^layernorm]: Ba et al 2016, [*Layer Normalization*](https://arxiv.org/abs/1607.06450)
 
 [^nemotroncc]: Su et al 2024, [*Nemotron-CC: Transforming Common Crawl into a Refined Long-Horizon Pretraining Dataset*](https://arxiv.org/abs/2412.02595)
 
