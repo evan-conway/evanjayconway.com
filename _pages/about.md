@@ -27,4 +27,4 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 
-Hi! I'm Evan. I'm currently an undergraduate student at the University of Virginia, studying computer science and mathematics. In the past, I've worked at the [Navy Center for Applied Research in Artificial Intelligence](https://www.nrl.navy.mil/itd/aic/), where I researched topics in automated planning. I've also done some mathematical research, including one paper with [Terence Tao](https://terrytao.wordpress.com/2025/06/03/decomposing-a-factorial-into-large-factors-second-version/).
+Hi! I'm Evan. I'm currently an intern at Palantir, working on their LLM infrastructure. In the past, I worked at the [Navy Center for Applied Research in Artificial Intelligence](https://www.nrl.navy.mil/itd/aic/), where I researched topics in automated planning. I've also done some mathematical research, including one paper with [Terence Tao](https://terrytao.wordpress.com/2025/06/03/decomposing-a-factorial-into-large-factors-second-version/). This upcoming fall, I'll be entering CMU as a new master's student, focusing on machine learning.
