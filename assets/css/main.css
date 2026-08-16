@@ -153,6 +153,18 @@ figure {
   margin: 2rem 0;
 }
 
+/*
+  Centered, and never scaled past their natural size -- these are screenshots
+  and diagrams, so stretching them to fill the column just blurs them. Images
+  wider than the column are capped by the `max-width: 100%` rule up top.
+*/
+figure img {
+  display: block;
+  margin: 0 auto;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 15%);
+}
+
 /* A figure can stack several images under one caption; space them apart. */
 figure img + img {
   margin-top: 1rem;
