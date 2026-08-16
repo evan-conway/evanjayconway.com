@@ -237,13 +237,8 @@ td {
 }
 
 .post-date {
-  margin-bottom: 0.25rem;
-  color: #666;
-}
-
-.post-description {
   margin-bottom: 2.5rem;
-  color: #444;
+  color: #666;
 }
 
 .post-list {
