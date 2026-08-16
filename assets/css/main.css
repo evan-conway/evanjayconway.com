@@ -25,11 +25,24 @@ video {
   height: auto;
 }
 
-/* Long code lines, wide tables, and big equations scroll inside themselves. */
+/* Long code lines and wide tables scroll inside themselves. */
 pre,
-table,
+table {
+  overflow-x: auto;
+}
+
+/*
+  Same for wide equations, but the vertical axis needs handling too: setting
+  overflow-x on a box whose overflow-y is `visible` makes the browser compute
+  overflow-y to `auto`, and MathJax's glyphs overshoot their container by a
+  fraction of a pixel -- which puts a vertical scrollbar beside every equation.
+  Pinning overflow-y and adding a little padding for the glyphs to sit in fixes
+  it without clipping tall symbols.
+*/
 mjx-container[display="true"] {
   overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
 }
 
 /* ---------------------------------------------------------------------- type */
