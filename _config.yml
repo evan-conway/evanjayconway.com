@@ -1,4 +1,13 @@
+# Site-wide settings. Everything not set here uses Jekyll's default, on purpose.
+# Restart the dev server after editing this file -- Jekyll does not reload it.
+
+title: Evan Conway
+
+# Keeps post URLs identical to the old site, e.g.
+# /posts/2026/nanogpt-improvements/. Changing this breaks existing links.
 permalink: /posts/:year/:title/
 
 exclude:
   - docker-compose.yml
+  - AGENTS.md
+  - CLAUDE.md

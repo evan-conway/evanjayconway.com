@@ -1,0 +1,39 @@
+/*
+  The site's only stylesheet.
+
+  Right now this deliberately contains mechanics only -- rules that fix real
+  layout problems -- and no aesthetic choices. There are no colors, fonts, or
+  spacing decisions here yet; everything not listed below is the browser
+  default, on purpose, waiting to be designed.
+*/
+
+/* Width and padding are included in an element's size. Makes layout math predictable. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Keep images inside the page instead of forcing the whole page to scroll sideways. */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Long code lines, wide tables, and big equations scroll inside themselves. */
+pre,
+table,
+mjx-container[display="true"] {
+  overflow-x: auto;
+}
+
+/*
+  One column, centered, with breathing room on small screens.
+  The 42rem is the measure -- the single number that controls line length.
+*/
+body {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}

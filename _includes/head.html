@@ -1,0 +1,25 @@
+<!-- Everything inside <head>. Edit this file to change metadata for every page at once. -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>
+  {% if page.title and page.title != site.title %}{{ page.title }} &middot; {{ site.title }}{% else %}{{ site.title }}{% endif %}
+</title>
+
+{% if page.description %}<meta name="description" content="{{ page.description }}" />{% endif %}
+
+<link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" />
+
+<!--
+  MathJax renders the LaTeX in posts. It loads on every page, which is a
+  wasted request on pages without math, but it means math can never silently
+  fail to render because someone forgot to set a flag in the front matter.
+
+  The inlineMath line is required: kramdown converts $$...$$ display math into
+  \[...\] (which MathJax reads by default) but passes single-$ inline math
+  through untouched, so MathJax has to be told to look for it.
+-->
+<script>
+  window.MathJax = { tex: { inlineMath: [["$", "$"]] } };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>

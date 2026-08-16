@@ -3,15 +3,6 @@ layout: post
 title: A Field Guide to NanoGPT Speedrun Optimizations
 date: 2026-03-07
 description: Improvements to the NanoGPT and NanoChat speedruns
-
-bibliography: nanogpt-improvements.bib
-toc:
-  sidebar: left
-
-_styles: >
-    h3 {
-        font-size: 1.5rem;
-    }
 ---
 
 Near the end of 2022, [Andrej Karpathy](https://karpathy.ai/) released NanoGPT[^nanogpt], a small, hackable GPT. A few years later, [Keller Jordan](https://kellerjordan.github.io/) forked off the Modded NanoGPT[^nanogptreadme] repository and launched the NanoGPT speedrun, which sought to improve NanoGPT's training speed on a single 8xH100 node as much as possible.

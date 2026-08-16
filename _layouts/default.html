@@ -1,17 +1,24 @@
 <!doctype html>
+<!--
+  The base layout every page ends up inside.
+
+  The other two layouts (page.html and post.html) wrap a page's content and
+  then hand it to this one, which supplies the surrounding HTML document.
+
+  Note: Liquid runs inside HTML comments too, so don't write Liquid tags in a
+  comment unless you mean them to execute. The doctype stays on line 1.
+-->
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ page.title }}</title>
-
-    <!-- kramdown passes single-$ inline math through as plain text, so MathJax has to be told to read it. -->
-    <script>
-      window.MathJax = { tex: { inlineMath: [["$", "$"]] } };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    {% include head.html %}
   </head>
   <body>
-    {{ content }}
+    {% include header.html %}
+
+    <main>
+      {{ content }}
+    </main>
+
+    {% include footer.html %}
   </body>
 </html>

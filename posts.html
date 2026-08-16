@@ -1,0 +1,18 @@
+---
+layout: page
+title: Posts
+permalink: /posts/
+---
+
+<!--
+  Lists every file in _posts/, newest first. New posts appear here
+  automatically; there is no list to keep updated.
+-->
+<ul class="post-list">
+  {% for post in site.posts %}
+    <li>
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+    </li>
+  {% endfor %}
+</ul>
