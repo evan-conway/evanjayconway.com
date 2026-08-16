@@ -247,6 +247,16 @@ td {
   color: #666;
 }
 
+/* The row of profile links on the landing page. */
+.link-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 .post-list {
   padding: 0;
   list-style: none;

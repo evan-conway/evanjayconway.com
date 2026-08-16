@@ -3,7 +3,40 @@ layout: default
 title: Evan Conway
 ---
 
-<!-- The landing page. Placeholder content: replace with whatever you want here. -->
+<!--
+  The landing page.
+
+  The bio is ported from the old site's about page. The links list and the
+  recent-posts list below it are plain HTML on purpose -- there are few enough
+  of each that a loop would be harder to edit than the lines themselves.
+  The exception is the post list, which reads from _posts so new posts appear
+  without touching this file.
+-->
 <h1>Evan Conway</h1>
 
-<p><a href="{{ '/posts/' | relative_url }}">Posts</a></p>
+<p>
+  Hi! I'm Evan. I'm currently an intern at Palantir, working on their LLM infrastructure. In the past, I worked at the
+  <a href="https://www.nrl.navy.mil/itd/aic/">Navy Center for Applied Research in Artificial Intelligence</a>, where I
+  researched topics in automated planning. I've also done some mathematical research, including one paper with
+  <a href="https://terrytao.wordpress.com/2025/06/03/decomposing-a-factorial-into-large-factors-second-version/"
+    >Terence Tao</a
+  >. This upcoming fall, I'll be entering CMU as a new master's student, focusing on machine learning.
+</p>
+
+<ul class="link-list">
+  <li><a href="https://github.com/evan-conway">GitHub</a></li>
+  <li><a href="https://x.com/evanjayconway">X</a></li>
+  <li><a href="https://www.linkedin.com/in/evan-conway-cs">LinkedIn</a></li>
+  <li><a href="mailto:evanjayconway@gmail.com">Email</a></li>
+</ul>
+
+<h2>Recent posts</h2>
+
+<ul class="post-list">
+  {% for post in site.posts limit: 5 %}
+    <li>
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+    </li>
+  {% endfor %}
+</ul>
