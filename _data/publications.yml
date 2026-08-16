@@ -6,8 +6,10 @@
 #            short link, so the destination can change in one place
 #   authors  the full author list, in order, comma-separated. The template
 #            bolds site.author automatically, so write the name normally.
-#   venue    where it appeared
-#   date     month and year
+#   venue    where it appeared -- the venue of record. A paper that's still a
+#            preprint says "arXiv"; once it lands in a journal, that replaces it.
+#   date     month and year of that venue. Use "to appear" for a paper that's
+#            accepted but not yet issued.
 
 - title: "POrTAL: Plan-Orchestrated Tree Assembly for Lookahead"
   url: /papers/portal/
@@ -19,4 +21,4 @@
   url: /papers/guy-selfridge/
   authors: Boris Alexeev, Evan Conway, Matthieu Rosenfeld, Andrew V. Sutherland, Terence Tao, Markus Uhr, Kevin Ventullo
   venue: Mathematics of Computation
-  date: June 2025
+  date: to appear
