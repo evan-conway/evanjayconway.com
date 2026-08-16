@@ -198,26 +198,18 @@ td {
 }
 
 /*
-  The footnote list kramdown appends at the end of a post. It carries its own
-  rule so the notes are separated even in a post that just ends with them.
+  The footnote list kramdown appends at the end of a post. It draws its own
+  rule, so a "## References" heading above it should NOT be followed by a
+  `---` the way other sections are -- that would produce two stacked rules.
+  The spacing here is tuned to match what an <hr> under a heading produces,
+  so the references section lines up with every other section.
 */
 .footnotes {
-  margin-top: 4rem;
+  margin-top: 1rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e5e5;
   font-size: 0.9rem;
   color: #444;
-}
-
-/*
-  ...but when a post introduces its notes with a heading of its own -- like
-  "## References" followed by `---` -- that rule is already on the page, and
-  drawing a second one right under it looks like a mistake.
-*/
-hr + .footnotes {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 /* ------------------------------------------------------- site chrome & lists */

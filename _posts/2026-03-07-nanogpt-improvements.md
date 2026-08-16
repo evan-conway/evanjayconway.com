@@ -208,7 +208,6 @@ If you found this post useful, please cite it as:
 ```
 
 ## References
----
 
 [^layernorm]: Ba et al 2016, [*Layer Normalization*](https://arxiv.org/abs/1607.06450)
 
