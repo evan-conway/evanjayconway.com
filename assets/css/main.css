@@ -48,16 +48,15 @@ mjx-container[display="true"] {
 /* ---------------------------------------------------------------------- type */
 
 /*
-  The 42rem measure is the single number controlling line length. Somewhere
-  between 60 and 80 characters per line is the readable range; at this font
-  size, 42rem lands in it.
+  The 46rem measure is the single number controlling line length. It puts
+  roughly 83 characters on a line at this font size, matching the old site.
 
   The font stack is a placeholder: it uses whatever sans the reader's OS
   provides, so there's no webfont to download. Replacing it with a real
   typeface is a one-line change here (plus a <link> in _includes/head.html).
 */
 body {
-  max-width: 42rem;
+  max-width: 46rem;
   margin: 0 auto;
   padding: 0 1rem 6rem;
 
@@ -68,8 +67,14 @@ body {
   background: #fff;
 }
 
+/*
+  `pretty` asks the browser to consider the whole paragraph when choosing line
+  breaks rather than filling one line at a time, which evens out the ragged
+  right edge and avoids leaving a single word on the last line.
+*/
 p {
   margin: 0 0 1.15em;
+  text-wrap: pretty;
 }
 
 /*
