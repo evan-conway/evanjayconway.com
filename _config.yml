@@ -3,6 +3,10 @@
 
 title: Evan Conway
 
+# Used to bold your name in the author lists in _data/publications.yml.
+# Must match exactly how the name is written there.
+author: Evan Conway
+
 # Used to build absolute URLs (the canonical link in <head>). `jekyll serve`
 # overrides this with the local address, so dev pages stay self-referential.
 url: https://evanjayconway.com

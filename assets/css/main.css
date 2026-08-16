@@ -247,6 +247,30 @@ td {
   color: #666;
 }
 
+/* Publications on the landing page: title, then authors, then venue and date. */
+.publication-list {
+  padding: 0;
+  list-style: none;
+}
+
+.publication-list li {
+  margin-bottom: 1.5rem;
+}
+
+.publication-list > li > a {
+  font-weight: 600;
+}
+
+.publication-authors,
+.publication-venue {
+  margin: 0.15rem 0 0;
+}
+
+.publication-venue {
+  font-size: 0.9rem;
+  color: #666;
+}
+
 .post-list {
   padding: 0;
   list-style: none;

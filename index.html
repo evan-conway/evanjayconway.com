@@ -24,6 +24,25 @@ title: Evan Conway
   >. This upcoming fall, I'll be entering CMU as a new master's student, focusing on machine learning.
 </p>
 
+<h2>Publications</h2>
+
+<!--
+  Entries live in _data/publications.yml -- add papers there, not here.
+  `bold_name` wraps site.author in <strong>, so the author's own name is
+  emphasized in every author list without anyone having to mark it up.
+-->
+{% capture bold_name %}<strong>{{ site.author }}</strong>{% endcapture %}
+
+<ul class="publication-list">
+  {% for pub in site.data.publications %}
+    <li>
+      <a href="{{ pub.url | relative_url }}">{{ pub.title }}</a>
+      <p class="publication-authors">{{ pub.authors | replace: site.author, bold_name }}</p>
+      <p class="publication-venue">{{ pub.venue }}, {{ pub.date }}</p>
+    </li>
+  {% endfor %}
+</ul>
+
 <h2>Recent posts</h2>
 
 <ul class="post-list">

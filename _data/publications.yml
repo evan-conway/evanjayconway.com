@@ -1,0 +1,22 @@
+# Publications shown on the landing page, newest first.
+#
+# Each entry needs:
+#   title    the paper's title
+#   url      where the title links -- prefer the site's own /papers/<slug>/
+#            short link, so the destination can change in one place
+#   authors  the full author list, in order, comma-separated. The template
+#            bolds site.author automatically, so write the name normally.
+#   venue    where it appeared
+#   date     month and year
+
+- title: "POrTAL: Plan-Orchestrated Tree Assembly for Lookahead"
+  url: /papers/portal/
+  authors: Evan Conway, David Porfirio, David Chan, Mark Roberts, Laura M. Hiatt
+  venue: arXiv
+  date: December 2025
+
+- title: Decomposing a factorial into large factors
+  url: /papers/guy-selfridge/
+  authors: Boris Alexeev, Evan Conway, Matthieu Rosenfeld, Andrew V. Sutherland, Terence Tao, Markus Uhr, Kevin Ventullo
+  venue: Mathematics of Computation
+  date: June 2025
