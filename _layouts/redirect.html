@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  A bare redirect page. Set `redirect:` in a page's front matter and this
+  layout sends the browser straight there.
+
+  Deliberately standalone: it does NOT use default.html, so the page pulls in
+  no stylesheet, no MathJax, and no site chrome. The redirect is the first
+  thing in the document head, so it fires before the browser requests anything
+  else -- the whole page is ~700 bytes and there is nothing to render.
+
+  (GitHub Pages serves static files only, so a real 301 isn't available
+  without a plugin; a meta refresh with a zero delay is the closest thing,
+  and browsers treat it as a redirect for history and back-button purposes.)
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0; url={{ page.redirect }}" />
+    <link rel="canonical" href="{{ page.redirect }}" />
+    <title>{{ page.title }}</title>
+  </head>
+  <body>
+    <a href="{{ page.redirect }}">{{ page.redirect }}</a>
+  </body>
+</html>

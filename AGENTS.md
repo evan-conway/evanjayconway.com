@@ -76,6 +76,22 @@ One catch: inline HTML inside markdown *link text* gets escaped by kramdown, so
 the span can't be used there. A single dollar amount inside a link is fine on
 its own -- the delimiters only pair within one block element.
 
+**Add a paper short link.** These are the links handed out in place of a raw
+arXiv URL, e.g. `evanjayconway.com/papers/portal`. Create `papers/<slug>.md`:
+
+```markdown
+---
+layout: redirect
+permalink: /papers/<slug>/
+title: "Paper: Full Title Here"
+redirect: https://arxiv.org/abs/XXXX.XXXXX
+---
+```
+
+The `redirect` layout is intentionally standalone -- it loads no CSS or JS, so
+the browser leaves before it renders anything. Don't route it through
+default.html; that's what made the old site's version flash a whole page first.
+
 **Add a page.** Create `whatever.html` (or `.md`) in the repo root:
 
 ```markdown
