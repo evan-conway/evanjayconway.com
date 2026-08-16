@@ -1,11 +1,15 @@
 /*
   The site's only stylesheet.
 
-  Right now this deliberately contains mechanics only -- rules that fix real
-  layout problems -- and no aesthetic choices. There are no colors, fonts, or
-  spacing decisions here yet; everything not listed below is the browser
-  default, on purpose, waiting to be designed.
+  Organized as: mechanics (layout rules that fix real problems), then type,
+  then individual elements. Values here are a readable starting point, not
+  final design decisions -- they're meant to be argued with.
+
+  There is no dark mode, by choice, so colors are written as plain values
+  rather than custom properties.
 */
+
+/* ---------------------------------------------------------------- mechanics */
 
 /* Width and padding are included in an element's size. Makes layout math predictable. */
 *,
@@ -28,12 +32,197 @@ mjx-container[display="true"] {
   overflow-x: auto;
 }
 
+/* ---------------------------------------------------------------------- type */
+
 /*
-  One column, centered, with breathing room on small screens.
-  The 42rem is the measure -- the single number that controls line length.
+  The 42rem measure is the single number controlling line length. Somewhere
+  between 60 and 80 characters per line is the readable range; at this font
+  size, 42rem lands in it.
+
+  The font stack is a placeholder: it uses whatever sans the reader's OS
+  provides, so there's no webfont to download. Replacing it with a real
+  typeface is a one-line change here (plus a <link> in _includes/head.html).
 */
 body {
   max-width: 42rem;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1rem 6rem;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+p {
+  margin: 0 0 1.15em;
+}
+
+/*
+  Headings: each level is clearly smaller than the one above, and carries much
+  more space above it than below, so a heading reads as attached to the section
+  it introduces rather than floating between two.
+*/
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-top: 3rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+  margin-top: 2rem;
+}
+
+h4 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+}
+
+a {
+  color: #12457a;
+}
+
+/*
+  Footnote markers. This post has ~80 of them, so styling them like body links
+  (blue, underlined) speckles every paragraph. Muted and unadorned, they stay
+  available without competing with the text.
+*/
+a.footnote,
+a.reversefootnote {
+  color: #777;
+  text-decoration: none;
+}
+
+/* ------------------------------------------------------------------- blocks */
+
+blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid #ddd;
+  color: #444;
+}
+
+pre {
+  padding: 0.9rem 1rem;
+  background: #f6f6f6;
+  border-radius: 3px;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+/* Inline code only -- the descendant selector avoids double-styling code inside <pre>. */
+:not(pre) > code {
+  padding: 0.1em 0.3em;
+  background: #f0f0f0;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+figure {
+  margin: 2rem 0;
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+}
+
+/* The post's markdown has a `---` under each `##`, which becomes one of these. */
+hr {
+  height: 0;
+  margin: 1rem 0 2rem;
+  border: 0;
+  border-top: 1px solid #e5e5e5;
+}
+
+table {
+  display: block;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+/* The footnote list kramdown appends at the end of a post. */
+.footnotes {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e5e5;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+/* ------------------------------------------------------- site chrome & lists */
+
+.site-header {
+  display: flex;
+  gap: 1.5rem;
+  align-items: baseline;
+  padding: 1.5rem 0 2.5rem;
+}
+
+.site-header a {
+  color: #1a1a1a;
+  text-decoration: none;
+}
+
+.site-header > a {
+  font-weight: 600;
+}
+
+.site-header nav a {
+  color: #666;
+}
+
+.site-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e5e5;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.post-date {
+  margin-bottom: 0.25rem;
+  color: #666;
+}
+
+.post-description {
+  margin-bottom: 2.5rem;
+  color: #444;
+}
+
+.post-list {
+  padding: 0;
+  list-style: none;
+}
+
+.post-list li {
+  margin-bottom: 0.6rem;
+}
+
+.post-list time {
+  display: inline-block;
+  min-width: 9rem;
+  color: #666;
+  font-size: 0.9rem;
 }
