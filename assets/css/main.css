@@ -197,13 +197,27 @@ td {
   text-align: left;
 }
 
-/* The footnote list kramdown appends at the end of a post. */
+/*
+  The footnote list kramdown appends at the end of a post. It carries its own
+  rule so the notes are separated even in a post that just ends with them.
+*/
 .footnotes {
   margin-top: 4rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e5e5;
   font-size: 0.9rem;
   color: #444;
+}
+
+/*
+  ...but when a post introduces its notes with a heading of its own -- like
+  "## References" followed by `---` -- that rule is already on the page, and
+  drawing a second one right under it looks like a mistake.
+*/
+hr + .footnotes {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* ------------------------------------------------------- site chrome & lists */
