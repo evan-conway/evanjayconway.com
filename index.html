@@ -24,6 +24,17 @@ title: Evan Conway
   >. This upcoming fall, I'll be entering CMU as a new master's student, focusing on machine learning.
 </p>
 
+<h2>Recent posts</h2>
+
+<ul class="post-list">
+  {% for post in site.posts limit: 5 %}
+    <li>
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+    </li>
+  {% endfor %}
+</ul>
+
 <h2>Publications</h2>
 
 <!--
@@ -39,17 +50,6 @@ title: Evan Conway
       <a href="{{ pub.url | relative_url }}">{{ pub.title }}</a>
       <p class="publication-authors">{{ pub.authors | replace: site.author, bold_name }}</p>
       <p class="publication-venue">{{ pub.venue }}, {{ pub.date }}</p>
-    </li>
-  {% endfor %}
-</ul>
-
-<h2>Recent posts</h2>
-
-<ul class="post-list">
-  {% for post in site.posts limit: 5 %}
-    <li>
-      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
-      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
     </li>
   {% endfor %}
 </ul>
