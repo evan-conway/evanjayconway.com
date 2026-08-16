@@ -50,6 +50,32 @@ Body text here.
 It appears on `/posts/` automatically, at `/posts/YYYY/slug/`. Post images go
 in `assets/img/<slug>/`.
 
+**Add a figure to a post.**
+
+```liquid
+{% include figure.liquid path="assets/img/slug/thing.png" caption="What it shows." %}
+```
+
+`caption` is optional and may contain HTML -- use single quotes inside it, since
+the parameter itself is double-quoted. To stack several images under one shared
+caption, give `path` a comma-separated list.
+
+**Write a literal dollar sign in prose.** Wrap it:
+
+```markdown
+it cost <span class="tex2jax_ignore">$100</span> to train
+```
+
+MathJax treats `$` as an inline-math delimiter, so two bare dollar amounts in
+the same paragraph turn everything between them into an equation. Markdown
+escaping does not help: kramdown converts both `\$` and `&#36;` back into a
+plain `$` before MathJax ever sees it. The `tex2jax_ignore` class is MathJax's
+own opt-out and is the only thing that works.
+
+One catch: inline HTML inside markdown *link text* gets escaped by kramdown, so
+the span can't be used there. A single dollar amount inside a link is fine on
+its own -- the delimiters only pair within one block element.
+
 **Add a page.** Create `whatever.html` (or `.md`) in the repo root:
 
 ```markdown

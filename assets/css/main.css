@@ -135,6 +135,11 @@ figure {
   margin: 2rem 0;
 }
 
+/* A figure can stack several images under one caption; space them apart. */
+figure img + img {
+  margin-top: 1rem;
+}
+
 figcaption {
   margin-top: 0.5rem;
   font-size: 0.9rem;

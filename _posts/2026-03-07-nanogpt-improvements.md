@@ -7,7 +7,7 @@ description: Improvements to the NanoGPT and NanoChat speedruns
 
 Near the end of 2022, [Andrej Karpathy](https://karpathy.ai/) released NanoGPT[^nanogpt], a small, hackable GPT. A few years later, [Keller Jordan](https://kellerjordan.github.io/) forked off the Modded NanoGPT[^nanogptreadme] repository and launched the NanoGPT speedrun, which sought to improve NanoGPT's training speed on a single 8xH100 node as much as possible.
 
-Since then, Modded NanoGPT has gone from taking 45 minutes to train a model equivalent to GPT-2 Small to taking less than 90 seconds. Using a similar setup, Andrej Karpathy's NanoGPT successor, NanoChat[^nanochat], has reduced the time needed to train a GPT-2 XL level model from 168 hours to around 2 hours. These improvements have massively changed the economics of small-model training, making it possible to train a fully functional model for only around $50.
+Since then, Modded NanoGPT has gone from taking 45 minutes to train a model equivalent to GPT-2 Small to taking less than 90 seconds. Using a similar setup, Andrej Karpathy's NanoGPT successor, NanoChat[^nanochat], has reduced the time needed to train a GPT-2 XL level model from 168 hours to around 2 hours. These improvements have massively changed the economics of small-model training, making it possible to train a fully functional model for only around <span class="tex2jax_ignore">$50</span>.
 
 This post covers some of the most interesting and impactful upgrades used in both speedruns, with the goal of showing how model training got so fast. These improvements are presented in (approximate) order of importance.
 
@@ -49,14 +49,7 @@ A similar method of alternating short and long attention windows was used in GPT
 
 Modded NanoGPT uses an attention window schedule, where the size of the attention window is gradually increased[^windowwarmup]. One disadvantage of changing the window size when using FlashAttention 3 is that each change requires some recompilation. Due to this, Modded NanoGPT increases the window size in a few large steps throughout training.
 
-<div class="row mt-3 justify-content-center">
-    <div class="col-sm-10 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/attention_window_size.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="caption">
-    An example of alternating attention window lengths, with window length increasing over time. Figure by <a href="https://x.com/leloykun/status/1880301758154698958">Franz Louis Cesista</a>.
-</div>
+{% include figure.liquid path="assets/img/nano-gpt/attention_window_size.png" caption="An example of alternating attention window lengths, with window length increasing over time. Figure by <a href='https://x.com/leloykun/status/1880301758154698958'>Franz Louis Cesista</a>." %}
 
 ## ClimbMix
 ---
@@ -70,14 +63,7 @@ While Modded NanoGPT does not allow changing the training data, NanoChat has exp
 
 This results in a high-quality dataset that appropriately weights the frequency of various topics.
 
-<div class="row mt-3 justify-content-center">
-    <div class="col-sm-10 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/topic_clusters.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="caption">
-    Nemotron-ClimbMix topic clusters. Figure from <a href="https://arxiv.org/pdf/2504.13161#page=17">Diao et al</a>.
-</div>
+{% include figure.liquid path="assets/img/nano-gpt/topic_clusters.png" caption="Nemotron-ClimbMix topic clusters. Figure from <a href='https://arxiv.org/pdf/2504.13161#page=17'>Diao et al</a>." %}
 
 Modded NanoGPT uses FineWeb-Edu, a deduplicated and filtered selection of Common Crawl that was further filtered for data with high educational quality.
 
@@ -90,32 +76,13 @@ This section includes architectural modifications that are already relatively we
 
 Pre-norm[^prenorm] moves the normalization blocks out of the residual stream, placing them at the start of each sub-block (attention / MLP). This controls the gradient norm and increases training stability. This was also used in GPT-2[^gpt2], along with many other models.
 
-<div class="row mt-3 justify-content-center">
-    <div class="col-sm-8 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/pre_norm_post_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="caption">
-    Post-norm (left) versus pre-norm (right). Figure from <a href="https://arxiv.org/pdf/2002.04745#page=2">Xiong et al</a>.
-</div>
+{% include figure.liquid path="assets/img/nano-gpt/pre_norm_post_norm.png" caption="Post-norm (left) versus pre-norm (right). Figure from <a href='https://arxiv.org/pdf/2002.04745#page=2'>Xiong et al</a>." %}
 
 ### QKNorm
 
 QKNorm[^qknorm] normalizes each query vector $q_i$ and key vector $k_j$ after splitting along the head dimension and applying RoPE. While the original QKNorm paper uses the $\ell_2$-norm, both NanoChat and Modded NanoGPT apply RMSNorm instead. The primary benefit of this improvement is stopping the softmaxes in the attention computation from being easily saturated by large key or query vectors, allowing for more diverse attention patterns. This also improves training by stopping the attention gradients from growing extremely small. However, one disadvantage of this approach is that it can lead to the model not being able to sufficiently "focus" on important tokens, which has led to some later efforts to tweak the attention scale[^attentionscale].
 
-<div class="row mt-3">
-    <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/no_qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="row mt-3">
-    <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/nano-gpt/qk_norm.png" class="img-fluid rounded z-depth-1" zoomable=true %}
-    </div>
-</div>
-<div class="caption">
-    Attention without QK-norm (above) versus attention with QK-norm (below). Figures from <a href="https://arxiv.org/pdf/2010.04245#page=3">Henry et al</a>.
-</div>
+{% include figure.liquid path="assets/img/nano-gpt/no_qk_norm.png, assets/img/nano-gpt/qk_norm.png" caption="Attention without QK-norm (above) versus attention with QK-norm (below). Figures from <a href='https://arxiv.org/pdf/2010.04245#page=3'>Henry et al</a>." %}
 
 ### RMSNorm
 
@@ -291,7 +258,7 @@ If you found this post useful, please cite it as:
 
 [^nanochat]: Karpathy 2025, [*nanochat: The best ChatGPT that $100 can buy*](https://github.com/karpathy/nanochat)
 
-[^nanochatannouncement]: Karpathy 2026, [*Beating GPT-2 for <<$100: the nanochat journey*](https://github.com/karpathy/nanochat/discussions/481)
+[^nanochatannouncement]: Karpathy 2026, [*Beating GPT-2 for \<\<$100: the nanochat journey*](https://github.com/karpathy/nanochat/discussions/481)
 
 [^nanochatlog]: Karpathy 2025, [*dev/LOG.md*](https://github.com/karpathy/nanochat/blob/master/dev/LOG.md)
 

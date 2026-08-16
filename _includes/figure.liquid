@@ -1,1 +1,21 @@
-<img src="{{ include.path | relative_url }}" />
+{%- comment -%}
+  A figure, used from posts like:
+
+    {% include figure.liquid path="assets/img/slug/thing.png" caption="What it shows." %}
+
+  path     one image path, or several separated by commas to stack them
+           under a single shared caption
+  caption  optional; may contain HTML, e.g. caption="Figure from <a href='...'>Smith et al</a>."
+  alt      optional alt text, applied to every image in the figure
+{%- endcomment -%}
+
+<figure>
+  {%- assign image_paths = include.path | split: "," -%}
+  {%- for image_path in image_paths -%}
+    <img src="{{ image_path | strip | relative_url }}" alt="{{ include.alt }}" />
+  {%- endfor -%}
+
+  {%- if include.caption -%}
+    <figcaption>{{ include.caption }}</figcaption>
+  {%- endif -%}
+</figure>
