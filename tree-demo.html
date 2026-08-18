@@ -1,0 +1,354 @@
+---
+layout: null
+permalink: /tree-demo/
+---
+
+<!doctype html>
+<!--
+  DEMO PAGE for the growing-tree animation. Standalone: it does not use the
+  site layout or main.css, so nothing here affects the real pages. Once the
+  look is settled, the SVG and script move into the landing page (or an
+  include) and this file goes away.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Growing tree demo</title>
+
+    <style>
+      @font-face {
+        font-family: "Vollkorn";
+        src: url("/assets/fonts/vollkorn-variable.woff2") format("woff2");
+        font-weight: 400 900;
+        font-display: swap;
+      }
+
+      body {
+        max-width: 46rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 6rem;
+        font-family: "Vollkorn", Georgia, serif;
+        font-size: 1.125rem;
+        line-height: 1.65;
+        color: #1a1a1a;
+        background: #fff;
+      }
+
+      h1 {
+        font-weight: 600;
+      }
+
+      .stage {
+        margin: 2em 0;
+      }
+
+      #tree {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      /* Edges are drawn by animating dashoffset; nodes fade and scale in. */
+      #tree .edge {
+        fill: none;
+        stroke: #1a1a1a;
+        stroke-width: 1.1;
+        stroke-linecap: round;
+        opacity: 0.55;
+      }
+
+      #tree .node {
+        fill: #1a1a1a;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.75em;
+        align-items: center;
+        font-size: 0.9em;
+      }
+
+      button {
+        font: inherit;
+        font-family: inherit;
+        padding: 0.3em 0.9em;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background: #fff;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: #888;
+      }
+
+      label {
+        color: #666;
+      }
+
+      .readout {
+        color: #666;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Growing tree</h1>
+
+    <p>
+      A minimum spanning tree over scattered points, built with Prim's algorithm and animated as it grows outward from
+      a single seed point.
+    </p>
+
+    <div class="stage">
+      <svg id="tree" viewBox="0 0 1000 460" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+    </div>
+
+    <div class="controls">
+      <button id="replay">Replay</button>
+      <button id="regenerate">New points</button>
+      <label>speed <input id="speed" type="range" min="0.25" max="3" step="0.25" value="1" /></label>
+      <span class="readout" id="readout"></span>
+    </div>
+
+    <script>
+      (() => {
+        const svg = document.getElementById("tree");
+        const readout = document.getElementById("readout");
+        const W = 1000;
+        const H = 460;
+
+        // --- deterministic randomness -------------------------------------
+        // A seeded generator so a given seed always draws the same tree, and
+        // "New points" is just a new seed.
+        function mulberry32(seed) {
+          return function () {
+            seed |= 0;
+            seed = (seed + 0x6d2b79f5) | 0;
+            let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        // --- point scatter -------------------------------------------------
+        // Poisson-disc sampling (Bridson) rather than uniform random: uniform
+        // points clump and leave bald patches, which makes the tree look
+        // accidental. Blue noise keeps a minimum distance between points, so
+        // the scatter reads as deliberate.
+        function poissonDisc(width, height, radius, rand, k = 25) {
+          const cell = radius / Math.SQRT2;
+          const cols = Math.ceil(width / cell);
+          const rows = Math.ceil(height / cell);
+          const grid = new Array(cols * rows).fill(-1);
+          const points = [];
+          const active = [];
+
+          const gridIndex = (x, y) => Math.floor(y / cell) * cols + Math.floor(x / cell);
+
+          const fits = (x, y) => {
+            if (x < 0 || y < 0 || x >= width || y >= height) return false;
+            const gx = Math.floor(x / cell);
+            const gy = Math.floor(y / cell);
+            for (let iy = Math.max(0, gy - 2); iy <= Math.min(rows - 1, gy + 2); iy++) {
+              for (let ix = Math.max(0, gx - 2); ix <= Math.min(cols - 1, gx + 2); ix++) {
+                const idx = grid[iy * cols + ix];
+                if (idx === -1) continue;
+                const p = points[idx];
+                if ((p[0] - x) ** 2 + (p[1] - y) ** 2 < radius * radius) return false;
+              }
+            }
+            return true;
+          };
+
+          const seed = [width / 2, height / 2];
+          points.push(seed);
+          grid[gridIndex(seed[0], seed[1])] = 0;
+          active.push(0);
+
+          while (active.length) {
+            const pick = Math.floor(rand() * active.length);
+            const parent = points[active[pick]];
+            let placed = false;
+
+            for (let i = 0; i < k; i++) {
+              const angle = rand() * Math.PI * 2;
+              const dist = radius * (1 + rand());
+              const x = parent[0] + Math.cos(angle) * dist;
+              const y = parent[1] + Math.sin(angle) * dist;
+              if (!fits(x, y)) continue;
+              points.push([x, y]);
+              grid[gridIndex(x, y)] = points.length - 1;
+              active.push(points.length - 1);
+              placed = true;
+              break;
+            }
+
+            if (!placed) active.splice(pick, 1);
+          }
+
+          return points;
+        }
+
+        // --- Prim's minimum spanning tree ----------------------------------
+        // O(n^2), which is the right choice here: no heap, no edge list, and
+        // for a few hundred points it runs in well under a millisecond.
+        function primMST(points) {
+          const n = points.length;
+          const inTree = new Array(n).fill(false);
+          const best = new Float64Array(n).fill(Infinity);
+          const parent = new Int32Array(n).fill(-1);
+          const edges = [];
+
+          best[0] = 0;
+
+          for (let iter = 0; iter < n; iter++) {
+            let u = -1;
+            let bestDist = Infinity;
+            for (let v = 0; v < n; v++) {
+              if (!inTree[v] && best[v] < bestDist) {
+                bestDist = best[v];
+                u = v;
+              }
+            }
+            if (u === -1) break;
+
+            inTree[u] = true;
+            if (parent[u] !== -1) edges.push([parent[u], u]);
+
+            for (let v = 0; v < n; v++) {
+              if (inTree[v]) continue;
+              const d = (points[u][0] - points[v][0]) ** 2 + (points[u][1] - points[v][1]) ** 2;
+              if (d < best[v]) {
+                best[v] = d;
+                parent[v] = u;
+              }
+            }
+          }
+
+          return { edges, parent };
+        }
+
+        // --- build the scene -----------------------------------------------
+        let scene = null;
+
+        function build(seed) {
+          const rand = mulberry32(seed);
+          const points = poissonDisc(W, H, 42, rand);
+          const { edges } = primMST(points);
+
+          // Children lists, so growth can spread down the tree in parallel:
+          // an edge starts moving the moment its parent node is reached,
+          // rather than waiting its turn in Prim's sequential order. Same
+          // tree, but it grows like a plant instead of a single snake.
+          const children = points.map(() => []);
+          for (const [a, b] of edges) children[a].push(b);
+
+          const length = (a, b) => Math.hypot(points[a][0] - points[b][0], points[a][1] - points[b][1]);
+
+          // Constant growth speed: an edge's duration is proportional to its
+          // length, so the tip moves at a steady rate everywhere.
+          const SPEED = 130; // svg units per second
+          const reachedAt = new Float64Array(points.length).fill(0);
+          const timeline = [];
+          const queue = [0];
+
+          while (queue.length) {
+            const a = queue.shift();
+            for (const b of children[a]) {
+              const dur = length(a, b) / SPEED;
+              const start = reachedAt[a];
+              reachedAt[b] = start + dur;
+              timeline.push({ a, b, start, dur, len: length(a, b) });
+              queue.push(b);
+            }
+          }
+
+          const total = Math.max(...reachedAt);
+
+          // --- DOM ---
+          svg.replaceChildren();
+          const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          svg.append(edgeLayer, nodeLayer);
+
+          for (const seg of timeline) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("class", "edge");
+            line.setAttribute("x1", points[seg.a][0]);
+            line.setAttribute("y1", points[seg.a][1]);
+            line.setAttribute("x2", points[seg.b][0]);
+            line.setAttribute("y2", points[seg.b][1]);
+            line.style.strokeDasharray = seg.len;
+            line.style.strokeDashoffset = seg.len;
+            seg.el = line;
+            edgeLayer.appendChild(line);
+          }
+
+          const nodeEls = points.map((p, i) => {
+            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            c.setAttribute("class", "node");
+            c.setAttribute("cx", p[0]);
+            c.setAttribute("cy", p[1]);
+            c.setAttribute("r", 0);
+            nodeLayer.appendChild(c);
+            return c;
+          });
+
+          scene = { points, timeline, reachedAt, total, nodeEls };
+          readout.textContent = `${points.length} points · ${timeline.length} edges · ${total.toFixed(1)}s`;
+          return scene;
+        }
+
+        // --- animation -------------------------------------------------------
+        const NODE_R = 2.6;
+        let raf = null;
+        let startedAt = 0;
+
+        function render(t) {
+          for (const seg of scene.timeline) {
+            const p = Math.min(1, Math.max(0, (t - seg.start) / seg.dur));
+            seg.el.style.strokeDashoffset = seg.len * (1 - p);
+          }
+          for (let i = 0; i < scene.points.length; i++) {
+            // Nodes pop in just as the growing tip arrives.
+            const p = Math.min(1, Math.max(0, (t - scene.reachedAt[i]) / 0.25));
+            scene.nodeEls[i].setAttribute("r", (NODE_R * p).toFixed(2));
+          }
+        }
+
+        function play() {
+          cancelAnimationFrame(raf);
+          const speed = parseFloat(document.getElementById("speed").value);
+          startedAt = performance.now();
+
+          const frame = (now) => {
+            const t = ((now - startedAt) / 1000) * speed;
+            render(t);
+            if (t < scene.total + 0.3) raf = requestAnimationFrame(frame);
+          };
+          raf = requestAnimationFrame(frame);
+        }
+
+        // Someone who has asked their system to reduce motion gets the
+        // finished tree immediately rather than no tree at all.
+        const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        let seed = 1;
+        build(seed);
+        still ? render(scene.total) : play();
+
+        document.getElementById("replay").addEventListener("click", () => (still ? render(scene.total) : play()));
+        document.getElementById("regenerate").addEventListener("click", () => {
+          seed = (Math.random() * 1e9) | 0;
+          build(seed);
+          still ? render(scene.total) : play();
+        });
+        document.getElementById("speed").addEventListener("input", () => (still ? null : play()));
+      })();
+    </script>
+  </body>
+</html>
