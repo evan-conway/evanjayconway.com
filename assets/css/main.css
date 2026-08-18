@@ -325,8 +325,9 @@ td {
     --tree-shape: ribbons;
   }
 
+  /* Clear of the ribbons, which are ~41px thick. */
   .tree-frame-content {
-    padding: 3rem 0;
+    padding: 3.75rem 0;
   }
 }
 

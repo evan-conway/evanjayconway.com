@@ -12,7 +12,7 @@
   const SVGNS = "http://www.w3.org/2000/svg";
 
   const SETTINGS = {
-    band: 58, // ring thickness, in svg units, where the frame is 1000 wide
+    bandPx: 41, // band thickness on screen, in css pixels
     spacing: 9, // minimum distance between scattered points
     turn: 2, // how much a change of direction costs when growing
     slowdown: 0.25, // speed of each level of branch relative to the one above
@@ -327,8 +327,7 @@
   // Which specs to grow. The stylesheet decides, via `--tree-shape` on the
   // frame, so the breakpoint lives with the styling rather than being
   // duplicated as a number here.
-  function specsFor(frame, w, h) {
-    const band = SETTINGS.band;
+  function specsFor(frame, w, h, band) {
     const layout = getComputedStyle(frame).getPropertyValue("--tree-shape").trim();
 
     if (layout === "ribbons") return [ribbonSpec(w, h, band, "top"), ribbonSpec(w, h, band, "bottom")];
@@ -350,7 +349,14 @@
     const w = 1000;
     const h = Math.round((box.height / box.width) * 1000);
 
-    const specs = specsFor(frame, w, h);
+    // Band thickness is specified on screen rather than in drawing units. The
+    // drawing space is always 1000 units wide, so a fixed number of units is a
+    // fixed *fraction* of the width -- which on a phone came out half as thick
+    // as on a desktop and looked spindly. Converting from pixels keeps it the
+    // same weight at every size.
+    const band = (SETTINGS.bandPx / box.width) * 1000;
+
+    const specs = specsFor(frame, w, h, band);
 
     // Spacing is defined against a 1000-unit-wide space, so a tall narrow
     // frame maps to a viewBox thousands of units deep and the area to fill
