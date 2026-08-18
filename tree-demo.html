@@ -49,17 +49,13 @@ permalink: /tree-demo/
         height: auto;
       }
 
-      /* Edges are drawn by animating dashoffset; nodes fade and scale in. */
+      /* Edges are drawn by animating stroke-dashoffset. Points themselves are never drawn -- the tree is its edges. */
       #tree .edge {
         fill: none;
         stroke: #1a1a1a;
         stroke-width: 1.1;
         stroke-linecap: round;
         opacity: 0.55;
-      }
-
-      #tree .node {
-        fill: #1a1a1a;
       }
 
       .controls {
@@ -104,7 +100,7 @@ permalink: /tree-demo/
     </p>
 
     <div class="stage">
-      <svg id="tree" viewBox="0 0 1000 460" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <svg id="tree" viewBox="0 0 1000 115" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
     </div>
 
     <div class="controls">
@@ -119,7 +115,7 @@ permalink: /tree-demo/
         const svg = document.getElementById("tree");
         const readout = document.getElementById("readout");
         const W = 1000;
-        const H = 460;
+        const H = 115;
 
         // --- deterministic randomness -------------------------------------
         // A seeded generator so a given seed always draws the same tree, and
@@ -272,8 +268,7 @@ permalink: /tree-demo/
           // --- DOM ---
           svg.replaceChildren();
           const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          svg.append(edgeLayer, nodeLayer);
+          svg.append(edgeLayer);
 
           for (const seg of timeline) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -288,23 +283,12 @@ permalink: /tree-demo/
             edgeLayer.appendChild(line);
           }
 
-          const nodeEls = points.map((p, i) => {
-            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            c.setAttribute("class", "node");
-            c.setAttribute("cx", p[0]);
-            c.setAttribute("cy", p[1]);
-            c.setAttribute("r", 0);
-            nodeLayer.appendChild(c);
-            return c;
-          });
-
-          scene = { points, timeline, reachedAt, total, nodeEls };
+          scene = { points, timeline, reachedAt, total };
           readout.textContent = `${points.length} points · ${timeline.length} edges · ${total.toFixed(1)}s`;
           return scene;
         }
 
         // --- animation -------------------------------------------------------
-        const NODE_R = 2.6;
         let raf = null;
         let startedAt = 0;
 
@@ -312,11 +296,6 @@ permalink: /tree-demo/
           for (const seg of scene.timeline) {
             const p = Math.min(1, Math.max(0, (t - seg.start) / seg.dur));
             seg.el.style.strokeDashoffset = seg.len * (1 - p);
-          }
-          for (let i = 0; i < scene.points.length; i++) {
-            // Nodes pop in just as the growing tip arrives.
-            const p = Math.min(1, Math.max(0, (t - scene.reachedAt[i]) / 0.25));
-            scene.nodeEls[i].setAttribute("r", (NODE_R * p).toFixed(2));
           }
         }
 
