@@ -145,6 +145,15 @@ Footnotes, fenced code, and tables come from kramdown's GFM input mode, which
 is already Jekyll's default -- there is no configuration for them, and there
 shouldn't be.
 
+## Archive
+
+`_archive/` holds things kept for reference but not built into the site --
+Jekyll ignores directories starting with an underscore. It currently holds
+`tree-demo.html`, the tuning page for the landing page's growing tree, with
+sliders for every parameter (point spacing, branch slowdown, catch-up, turn
+penalty, stroke, speed) and the ribbon/box/arch shapes. Move it back to the
+repo root to use it again.
+
 ## Deployment
 
 Not set up on this branch yet. The live site is still served from `main`, which
