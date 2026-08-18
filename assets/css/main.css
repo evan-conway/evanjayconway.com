@@ -5,9 +5,24 @@
   then individual elements. Values here are a readable starting point, not
   final design decisions -- they're meant to be argued with.
 
-  There is no dark mode, by choice, so colors are written as plain values
-  rather than custom properties.
+  There is still no dark mode, by choice. The palette below is a set of named
+  values rather than a theming mechanism: six colours, so that "muted text" is
+  one decision made once instead of #666 in six places drifting apart.
 */
+
+/*
+  Warm paper. A cream ground and a warm near-black, which is what a printed
+  page looks like and what Vollkorn is drawn for; oxblood for links, dark
+  enough to read as considered rather than decorative.
+*/
+:root {
+  --paper: #fdfbf7;
+  --ink: #211d18;
+  --muted: #6b6257;
+  --rule: #e6dfd3;
+  --surface: #f4eee3;
+  --accent: #7b2d26;
+}
 
 /* ----------------------------------------------------------------- typeface */
 
@@ -94,8 +109,8 @@ body {
   font-family: "Vollkorn", Georgia, serif;
   font-size: 1.125rem;
   line-height: 1.65;
-  color: #1a1a1a;
-  background: #fff;
+  color: var(--ink);
+  background: var(--paper);
 }
 
 /*
@@ -151,7 +166,7 @@ h4 {
 }
 
 a {
-  color: #12457a;
+  color: var(--accent);
 }
 
 /*
@@ -161,7 +176,7 @@ a {
 */
 a.footnote,
 a.reversefootnote {
-  color: #777;
+  color: var(--muted);
   text-decoration: none;
 }
 
@@ -170,13 +185,13 @@ a.reversefootnote {
 blockquote {
   margin: 1.4em 0;
   padding-left: 1em;
-  border-left: 2px solid #ddd;
-  color: #444;
+  border-left: 2px solid var(--rule);
+  color: var(--muted);
 }
 
 pre {
   padding: 0.9em 1em;
-  background: #f6f6f6;
+  background: var(--surface);
   border-radius: 3px;
   font-size: 0.9em;
   line-height: 1.5;
@@ -185,7 +200,7 @@ pre {
 /* Inline code only -- the descendant selector avoids double-styling code inside <pre>. */
 :not(pre) > code {
   padding: 0.1em 0.3em;
-  background: #f0f0f0;
+  background: var(--surface);
   border-radius: 3px;
   font-size: 0.9em;
 }
@@ -214,7 +229,7 @@ figure img + img {
 figcaption {
   margin-top: 0.5em;
   font-size: 0.9em;
-  color: #666;
+  color: var(--muted);
   text-align: center;
 }
 
@@ -223,7 +238,7 @@ hr {
   height: 0;
   margin: 0.65em 0 1.35em;
   border: 0;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--rule);
 }
 
 table {
@@ -234,7 +249,7 @@ table {
 th,
 td {
   padding: 0.4em 0.75em;
-  border: 1px solid #ddd;
+  border: 1px solid var(--rule);
   text-align: left;
 }
 
@@ -248,9 +263,9 @@ td {
 .footnotes {
   margin-top: 1em;
   padding-top: 1.5em;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--rule);
   font-size: 0.9em;
-  color: #444;
+  color: var(--muted);
 }
 
 /* ----------------------------------------------------------- tree frame */
@@ -295,7 +310,7 @@ td {
 
 .tree-branch {
   fill: none;
-  stroke: #1a1a1a;
+  stroke: var(--ink);
   stroke-width: 2;
   stroke-linecap: butt;
   opacity: 0.55;
@@ -341,7 +356,7 @@ td {
 }
 
 .site-header a {
-  color: #1a1a1a;
+  color: var(--ink);
   text-decoration: none;
 }
 
@@ -358,20 +373,20 @@ td {
 }
 
 .site-header nav a {
-  color: #666;
+  color: var(--muted);
 }
 
 .site-footer {
   margin-top: 4em;
   padding-top: 1.5em;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--rule);
   font-size: 0.9em;
-  color: #666;
+  color: var(--muted);
 }
 
 .post-date {
   margin-bottom: 2.2em;
-  color: #666;
+  color: var(--muted);
 }
 
 /* Publications on the landing page: title, then authors, then venue and date. */
@@ -395,7 +410,7 @@ td {
 
 .publication-venue {
   font-size: 0.9em;
-  color: #666;
+  color: var(--muted);
 }
 
 .post-list {
@@ -410,6 +425,6 @@ td {
 .post-list time {
   display: inline-block;
   min-width: 9em;
-  color: #666;
+  color: var(--muted);
   font-size: 0.9em;
 }
