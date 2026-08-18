@@ -100,7 +100,7 @@ permalink: /tree-demo/
     </p>
 
     <div class="stage">
-      <svg id="tree" viewBox="0 0 1000 115" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <svg id="tree" viewBox="0 0 1000 58" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
     </div>
 
     <div class="controls">
@@ -115,7 +115,11 @@ permalink: /tree-demo/
         const svg = document.getElementById("tree");
         const readout = document.getElementById("readout");
         const W = 1000;
-        const H = 115;
+        const H = 58;
+
+        // Minimum distance between scattered points. This is the density dial:
+        // smaller means more points and a finer, more filigree tree.
+        const POINT_SPACING = 16;
 
         // --- deterministic randomness -------------------------------------
         // A seeded generator so a given seed always draws the same tree, and
@@ -233,7 +237,7 @@ permalink: /tree-demo/
 
         function build(seed) {
           const rand = mulberry32(seed);
-          const points = poissonDisc(W, H, 42, rand);
+          const points = poissonDisc(W, H, POINT_SPACING, rand);
           const { edges } = primMST(points);
 
           // Children lists, so growth can spread down the tree in parallel:
