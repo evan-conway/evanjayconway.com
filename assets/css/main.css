@@ -264,6 +264,14 @@ td {
 .tree-frame {
   position: relative;
   margin: 1rem 0 3rem;
+
+  /*
+    Which layout the tree draws. Read by tree.js, so the breakpoint lives here
+    with the rest of the styling rather than as a duplicated number in the
+    script. `ring` frames the content on all four sides; `ribbons` is two
+    independent trees, one above and one below.
+  */
+  --tree-shape: ring;
 }
 
 .tree-frame-canvas {
@@ -307,16 +315,18 @@ td {
 }
 
 /*
-  On a narrow screen the band would eat most of the width, so the frame is
-  dropped entirely and the bio is left to stand on its own.
+  On a narrow screen the side bands would eat most of the column -- at 5.8% of
+  width each, they take ~44px out of a 375px phone -- and a vertical run that
+  thin can barely branch anyway. So the sides go and the top and bottom become
+  two independent trees, which also lets the text run the full width.
 */
 @media (max-width: 34rem) {
-  .tree-frame-canvas {
-    display: none;
+  .tree-frame {
+    --tree-shape: ribbons;
   }
 
   .tree-frame-content {
-    padding: 0;
+    padding: 3rem 0;
   }
 }
 

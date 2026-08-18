@@ -17,7 +17,8 @@
     turn: 2, // how much a change of direction costs when growing
     slowdown: 0.25, // speed of each level of branch relative to the one above
     catchup: 3.5, // how much time accelerates once the skeleton is drawn
-    speed: 130, // svg units per second
+    speed: 130, // svg units per second, for the ring
+    ribbonSpeed: 85, // slower on the narrow layout, where each run is shorter
     ramp: 0.8, // seconds over which catch-up eases in
     resettle: 800, // ms of stillness after a resize before the tree regrows
     minChange: 24, // px of size change worth regenerating for
@@ -60,7 +61,9 @@
       return true;
     };
 
-    const first = [shape.w / 2, Math.min(SETTINGS.band / 2, shape.h / 2)]; // top centre
+    // Start from the region's own seed. Anywhere outside its mask and every
+    // candidate around it is rejected, leaving the region empty.
+    const first = shape.seed;
     points.push(first);
     grid[gi(first[0], first[1])] = 0;
     active.push(0);
@@ -90,7 +93,7 @@
   // continuing straight over doubling back.
   function grow(points, shape) {
     const n = points.length;
-    const seed = [shape.w / 2, Math.min(SETTINGS.band / 2, shape.h / 2)];
+    const seed = shape.seed;
 
     let root = 0;
     let bestRoot = Infinity;
@@ -232,17 +235,17 @@
   // level advances more slowly, so the skeleton outruns its own detail. The
   // falloff is harmonic rather than exponential: compounding would leave deep
   // twigs crawling for an age after everything else has finished.
-  function schedule(tree, runs) {
+  function schedule(tree, runs, speed) {
     const k = 1 / SETTINGS.slowdown - 1;
     const len = (a, b) => Math.hypot(tree.points[a][0] - tree.points[b][0], tree.points[a][1] - tree.points[b][1]);
     const drawnAt = new Float64Array(tree.points.length);
 
     for (const run of runs) {
-      const speed = SETTINGS.speed / (1 + k * run.level);
+      const runSpeed = speed / (1 + k * run.level);
       const start = drawnAt[run.seq[0]];
       let t = start;
       for (let i = 1; i < run.seq.length; i++) {
-        t += len(run.seq[i - 1], run.seq[i]) / speed;
+        t += len(run.seq[i - 1], run.seq[i]) / runSpeed;
         drawnAt[run.seq[i]] = t;
       }
       run.start = start;
@@ -272,56 +275,131 @@
     }
   }
 
+  // ---------------------------------------------------------------------
+  // A tree is grown from a spec: a region to fill and how to fill it.
+  //
+  //   inside(x, y)  is this point part of the region
+  //   seed          where growth starts, and where the scatter begins
+  //   cut(a, b)     edges to forbid, used to break a loop at a chosen place
+  //   speed         units per second for the skeleton
+  //   spacing       minimum distance between scattered points
+  //   area          how much of the canvas the region covers, for point budgets
+  //
+  // Everything a tree needs is in the spec, so growing several is just calling
+  // this more than once. They have to be separate calls: Prim's spans whatever
+  // points it is given, so one pass over two bands would join them with a
+  // single long edge straight across the content between them.
+  // ---------------------------------------------------------------------
+  function growTree(spec, rand) {
+    const tree = grow(poissonDisc(spec, spec.spacing, rand), spec);
+    const runs = skeletonRuns(tree);
+    const { total, spineEnd } = schedule(tree, runs, spec.speed);
+    return { points: tree.points, runs, total, spineEnd };
+  }
+
+  // A band of the given thickness around the edge of the canvas. It is a loop,
+  // so it carries a cut at the bottom centre, opposite the seed: a tree cannot
+  // hold a loop, and left to itself Prim's breaks the ring at an arbitrary
+  // edge, sending growth most of the way round one side. Cutting it opposite
+  // the seed splits it into halves that meet at the bottom.
+  const ringSpec = (w, h, band) => ({
+    w,
+    h,
+    inside: (x, y) => x < band || x > w - band || y < band || y > h - band,
+    seed: [w / 2, band / 2],
+    cut: (a, b) => (a[0] - w / 2) * (b[0] - w / 2) < 0 && a[1] > h - band && b[1] > h - band,
+    speed: SETTINGS.speed,
+    area: w * h - Math.max(0, w - 2 * band) * Math.max(0, h - 2 * band),
+  });
+
+  // A horizontal band across the top or the bottom. Two ends, no loop, so
+  // nothing to cut.
+  const ribbonSpec = (w, h, band, edge) => ({
+    w,
+    h,
+    inside: (x, y) => (edge === "top" ? y < band : y > h - band),
+    seed: [w / 2, edge === "top" ? band / 2 : h - band / 2],
+    cut: () => false,
+    speed: SETTINGS.ribbonSpeed,
+    area: w * band,
+  });
+
+  // Which specs to grow. The stylesheet decides, via `--tree-shape` on the
+  // frame, so the breakpoint lives with the styling rather than being
+  // duplicated as a number here.
+  function specsFor(frame, w, h) {
+    const band = SETTINGS.band;
+    const layout = getComputedStyle(frame).getPropertyValue("--tree-shape").trim();
+
+    if (layout === "ribbons") return [ribbonSpec(w, h, band, "top"), ribbonSpec(w, h, band, "bottom")];
+    return [ringSpec(w, h, band)];
+  }
+
   function build(frame) {
     const svg = frame.querySelector(".tree-frame-canvas");
     const box = frame.getBoundingClientRect();
     if (box.width < 10 || box.height < 10) return;
-    // The stylesheet hides the canvas on narrow screens; building a tree
-    // nobody can see is pure cost, and a narrow frame is the expensive case.
+
+    // The stylesheet can hide the canvas; building a tree nobody can see is
+    // pure cost.
     if (getComputedStyle(svg).display === "none") return;
 
     // The drawing space is always 1000 units wide, with height following the
-    // frame's real proportions, so the band keeps a constant thickness
-    // relative to the width no matter how tall the content is.
+    // frame's real proportions, so a band keeps a constant thickness relative
+    // to the width no matter how tall the content is.
     const w = 1000;
     const h = Math.round((box.height / box.width) * 1000);
-    const band = SETTINGS.band;
 
-    const shape = {
-      w,
-      h,
-      inside: (x, y) => x < band || x > w - band || y < band || y > h - band,
-      cut: (a, b) => (a[0] - w / 2) * (b[0] - w / 2) < 0 && a[1] > h - band && b[1] > h - band,
-    };
+    const specs = specsFor(frame, w, h);
+
+    // Spacing is defined against a 1000-unit-wide space, so a tall narrow
+    // frame maps to a viewBox thousands of units deep and the area to fill
+    // grows with it. Left unbounded that took the scatter from ~440 points to
+    // 3772 and the build from 65ms to 1.9 seconds, freezing the page. The
+    // budget is shared across every spec, and each is thinned to fit.
+    // ~1.49 * spacing^2 of area per point, measured from the blue-noise scatter.
+    const area = specs.reduce((sum, spec) => sum + spec.area, 0);
+    const estimate = area / (1.49 * SETTINGS.spacing * SETTINGS.spacing);
+    const spacing = estimate > SETTINGS.maxPoints ? Math.sqrt(area / (1.49 * SETTINGS.maxPoints)) : SETTINGS.spacing;
+    for (const spec of specs) spec.spacing = spacing;
 
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-
-    // Point spacing is defined against a 1000-unit-wide space, so a tall
-    // narrow frame -- a phone, or a half-width window -- maps to a viewBox
-    // thousands of units deep and the band area explodes with it. Left
-    // unbounded that took the scatter from ~440 points to 3772 and the build
-    // from 65ms to 1.9 seconds, freezing the page. Thin the scatter instead:
-    // the tree gets coarser in shapes that would otherwise be unusable.
-    const bandArea = w * h - Math.max(0, w - 2 * band) * Math.max(0, h - 2 * band);
-    // ~1.49 * spacing^2 of area per point, measured from the blue-noise scatter.
-    const estimate = bandArea / (1.49 * SETTINGS.spacing * SETTINGS.spacing);
-    const spacing =
-      estimate > SETTINGS.maxPoints ? Math.sqrt(bandArea / (1.49 * SETTINGS.maxPoints)) : SETTINGS.spacing;
-
-    const rand = mulberry32((Math.random() * 1e9) | 0);
-    const tree = grow(poissonDisc(shape, spacing, rand), shape);
-    const runs = skeletonRuns(tree);
-    const { total, spineEnd } = schedule(tree, runs);
-
     svg.replaceChildren();
     const layer = document.createElementNS(SVGNS, "g");
     svg.appendChild(layer);
 
-    for (const run of runs) {
+    const rand = mulberry32((Math.random() * 1e9) | 0);
+    const grown = specs.map((spec) => growTree(spec, rand));
+
+    // Every tree is drawn into the same canvas and played on one clock. Their
+    // timelines all start at zero, so they grow alongside each other.
+    const drawn = grown.flatMap((tree) => draw(layer, tree));
+    const total = Math.max(0.001, ...grown.map((tree) => tree.total));
+    const spineEnd = Math.max(0, ...grown.map((tree) => tree.spineEnd));
+
+    // Someone who has asked their system to reduce motion gets the finished
+    // tree rather than no tree at all.
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      render(drawn, total);
+      return;
+    }
+
+    const started = performance.now();
+    const step = (now) => {
+      const t = warp((now - started) / 1000, spineEnd, SETTINGS.catchup);
+      render(drawn, t);
+      if (t < total + 0.3) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // One path per run, hidden by its own dash offset until the clock reaches it.
+  function draw(layer, { points, runs }) {
+    return runs.map((run) => {
       // Round once, then use the same numbers for the path data and for its
       // length. getTotalLength() would give the same answer but forces a
       // layout per path, and there are several hundred of them.
-      const pts = run.seq.map((i) => [+tree.points[i][0].toFixed(1), +tree.points[i][1].toFixed(1)]);
+      const pts = run.seq.map((i) => [+points[i][0].toFixed(1), +points[i][1].toFixed(1)]);
       let len = 0;
       for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
 
@@ -330,30 +408,10 @@
       path.setAttribute("d", `M${pts.map((p) => `${p[0]},${p[1]}`).join("L")}`);
       layer.appendChild(path);
 
-      run.el = path;
-      run.len = len;
       path.style.strokeDasharray = len;
       path.style.strokeDashoffset = len;
-    }
-
-    // Someone who has asked their system to reduce motion gets the finished
-    // tree rather than no tree at all.
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      render(runs, total);
-      return;
-    }
-
-    const play = () => {
-      const started = performance.now();
-      const step = (now) => {
-        const t = warp((now - started) / 1000, spineEnd, SETTINGS.catchup);
-        render(runs, t);
-        if (t < total + 0.3) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    };
-
-    play();
+      return { el: path, len, start: run.start, dur: run.dur };
+    });
   }
 
   // Wait until the frame can be measured correctly.
