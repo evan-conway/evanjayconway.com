@@ -253,6 +253,65 @@ td {
   color: #444;
 }
 
+/* ----------------------------------------------------------- tree frame */
+
+/*
+  A tree grows around this block on the landing page. The svg is absolutely
+  positioned to cover the frame, and the content's padding is what keeps text
+  clear of the band -- the band is 5.8% of the frame's width, so the padding
+  has to exceed that at every size.
+*/
+.tree-frame {
+  position: relative;
+  margin: 1rem 0 3rem;
+}
+
+.tree-frame-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Decorative: never intercept clicks or text selection. */
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/*
+  Hidden while a resize is in flight, because the drawing still describes the
+  old shape. Hiding is instant, reappearing fades -- see tree.js.
+*/
+.tree-frame-canvas.is-stale {
+  opacity: 0;
+  transition: none;
+}
+
+.tree-branch {
+  fill: none;
+  stroke: #1a1a1a;
+  stroke-width: 2;
+  stroke-linecap: butt;
+  opacity: 0.55;
+}
+
+.tree-frame-content {
+  position: relative;
+  padding: 4rem 4.5rem;
+}
+
+/*
+  On a narrow screen the band would eat most of the width, so the frame is
+  dropped entirely and the bio is left to stand on its own.
+*/
+@media (max-width: 34rem) {
+  .tree-frame-canvas {
+    display: none;
+  }
+
+  .tree-frame-content {
+    padding: 0;
+  }
+}
+
 /* ------------------------------------------------------- site chrome & lists */
 
 .site-header {

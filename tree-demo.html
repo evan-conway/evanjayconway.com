@@ -6,9 +6,15 @@ permalink: /tree-demo/
 <!doctype html>
 <!--
   DEMO PAGE for the growing-tree animation. Standalone: it does not use the
-  site layout or main.css, so nothing here affects the real pages. Once the
-  look is settled, the SVG and script move into the landing page (or an
-  include) and this file goes away.
+  site layout or main.css, so nothing here affects the real pages.
+
+  Growth is Prim's, with a turn penalty layered on the edge weight so that
+  continuing straight is cheap and doubling back is expensive.
+
+  The shape and the drawing order are separate concerns. The tree is decomposed
+  into runs by how much of the tree each carries, and runs further down that
+  hierarchy are animated more slowly, so the skeleton resolves before the
+  detail without the animation ever pausing between phases.
 -->
 <html lang="en">
   <head>
@@ -49,25 +55,31 @@ permalink: /tree-demo/
         height: auto;
       }
 
-      /* Edges are drawn by animating stroke-dashoffset. Points themselves are never drawn -- the tree is its edges. */
-      #tree .edge {
+      /*
+        No points are ever drawn, and caps are butt rather than round -- a round
+        cap is a half-disc of radius half the stroke width, which shows up as a
+        dot at every tip once the stroke gets heavy.
+      */
+      #tree .branch {
         fill: none;
         stroke: #1a1a1a;
-        stroke-width: 1.1;
-        stroke-linecap: round;
+        stroke-width: var(--stroke, 2);
+        stroke-linecap: butt;
+        stroke-linejoin: miter;
         opacity: 0.55;
       }
 
       .controls {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.75em;
         align-items: center;
         font-size: 0.9em;
       }
 
-      button {
+      button,
+      select {
         font: inherit;
-        font-family: inherit;
         padding: 0.3em 0.9em;
         border: 1px solid #ccc;
         border-radius: 3px;
@@ -80,13 +92,28 @@ permalink: /tree-demo/
         border-color: #888;
       }
 
-      label {
-        color: #666;
-      }
-
       .readout {
         color: #666;
         font-variant-numeric: tabular-nums;
+      }
+
+      .sliders {
+        display: grid;
+        grid-template-columns: max-content 12rem max-content;
+        gap: 0.5em 0.9em;
+        align-items: center;
+        margin-top: 1.2em;
+        font-size: 0.9em;
+        color: #666;
+      }
+
+      .sliders label {
+        display: contents;
+      }
+
+      .sliders output {
+        font-variant-numeric: tabular-nums;
+        color: #1a1a1a;
       }
     </style>
   </head>
@@ -94,10 +121,7 @@ permalink: /tree-demo/
   <body>
     <h1>Growing tree</h1>
 
-    <p>
-      A minimum spanning tree over scattered points, built with Prim's algorithm and animated as it grows outward from
-      a single seed point.
-    </p>
+    <p>A tree grown outward from a seed point over scattered points, and animated as it spreads.</p>
 
     <div class="stage">
       <svg id="tree" viewBox="0 0 1000 58" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
@@ -106,24 +130,79 @@ permalink: /tree-demo/
     <div class="controls">
       <button id="replay">Replay</button>
       <button id="regenerate">New points</button>
-      <label>speed <input id="speed" type="range" min="0.25" max="3" step="0.25" value="1" /></label>
+      <select id="shape">
+        <option value="ribbon">shape: ribbon</option>
+        <option value="box">shape: box</option>
+        <option value="arch">shape: arch</option>
+      </select>
       <span class="readout" id="readout"></span>
+    </div>
+
+    <div class="sliders">
+      <label>
+        <span>point spacing</span>
+        <input id="spacing" type="range" min="4" max="40" step="1" value="9" />
+        <output id="spacingOut"></output>
+      </label>
+      <label>
+        <span>branch slowdown</span>
+        <input id="slowdown" type="range" min="0.05" max="1" step="0.01" value="0.25" />
+        <output id="slowdownOut"></output>
+      </label>
+      <label>
+        <span>catch-up</span>
+        <input id="catchup" type="range" min="1" max="10" step="0.5" value="3.5" />
+        <output id="catchupOut"></output>
+      </label>
+      <label>
+        <span>turn penalty</span>
+        <input id="turn" type="range" min="0" max="4" step="0.1" value="2" />
+        <output id="turnOut"></output>
+      </label>
+      <label>
+        <span>stroke weight</span>
+        <input id="stroke" type="range" min="0.2" max="4" step="0.1" value="2" />
+        <output id="strokeOut"></output>
+      </label>
+      <label>
+        <span>speed</span>
+        <input id="speed" type="range" min="0.25" max="3" step="0.25" value="1" />
+        <output id="speedOut"></output>
+      </label>
     </div>
 
     <script>
       (() => {
+        const SVGNS = "http://www.w3.org/2000/svg";
         const svg = document.getElementById("tree");
-        const readout = document.getElementById("readout");
-        const W = 1000;
-        const H = 58;
+        const el = (id) => document.getElementById(id);
+        const SPEED = 130; // svg units per second
+        const BAND = 58; // thickness of the ribbon, in svg units
 
-        // Minimum distance between scattered points. This is the density dial:
-        // smaller means more points and a finer, more filigree tree.
-        const POINT_SPACING = 16;
+        // The region the tree is allowed to occupy. Every shape is a band of
+        // the same thickness -- the ribbon is just the band laid out straight
+        // -- and every one is seeded from the top centre, so growth runs away
+        // in both directions around the shape.
+        const SHAPES = {
+          ribbon: { w: 1000, h: BAND, inside: () => true },
+          box: {
+            w: 1000,
+            h: 420,
+            inside: (x, y, s) => x < BAND || x > s.w - BAND || y < BAND || y > s.h - BAND,
+            // A box band is a loop, and a tree cannot contain a loop, so the
+            // ring has to be broken somewhere. Left alone, Prim's breaks it at
+            // whatever edge happens to be longest -- an arbitrary spot, which
+            // sends growth two-thirds of the way round one side and leaves the
+            // other side arriving last. Cutting it at the bottom centre,
+            // directly opposite the seed, splits the ring into two equal halves
+            // that grow in opposite directions and meet at the bottom.
+            cut: (a, b, s) => (a[0] - s.w / 2) * (b[0] - s.w / 2) < 0 && a[1] > s.h - BAND && b[1] > s.h - BAND,
+          },
+          // An arch is the box without its bottom edge: up one side, over the
+          // top, down the other. Square corners, not a curve.
+          arch: { w: 1000, h: 420, inside: (x, y, s) => x < BAND || x > s.w - BAND || y < BAND },
+        };
 
-        // --- deterministic randomness -------------------------------------
-        // A seeded generator so a given seed always draws the same tree, and
-        // "New points" is just a new seed.
         function mulberry32(seed) {
           return function () {
             seed |= 0;
@@ -134,23 +213,21 @@ permalink: /tree-demo/
           };
         }
 
-        // --- point scatter -------------------------------------------------
-        // Poisson-disc sampling (Bridson) rather than uniform random: uniform
-        // points clump and leave bald patches, which makes the tree look
-        // accidental. Blue noise keeps a minimum distance between points, so
-        // the scatter reads as deliberate.
-        function poissonDisc(width, height, radius, rand, k = 25) {
+        // Blue-noise scatter: uniform random clumps and leaves bald patches.
+        function poissonDisc(shape, radius, rand, k = 25) {
+          const width = shape.w;
+          const height = shape.h;
           const cell = radius / Math.SQRT2;
           const cols = Math.ceil(width / cell);
           const rows = Math.ceil(height / cell);
           const grid = new Array(cols * rows).fill(-1);
           const points = [];
           const active = [];
-
-          const gridIndex = (x, y) => Math.floor(y / cell) * cols + Math.floor(x / cell);
+          const gi = (x, y) => Math.floor(y / cell) * cols + Math.floor(x / cell);
 
           const fits = (x, y) => {
             if (x < 0 || y < 0 || x >= width || y >= height) return false;
+            if (!shape.inside(x, y, shape)) return false;
             const gx = Math.floor(x / cell);
             const gy = Math.floor(y / cell);
             for (let iy = Math.max(0, gy - 2); iy <= Math.min(rows - 1, gy + 2); iy++) {
@@ -164,16 +241,15 @@ permalink: /tree-demo/
             return true;
           };
 
-          const seed = [width / 2, height / 2];
-          points.push(seed);
-          grid[gridIndex(seed[0], seed[1])] = 0;
+          const first = [width / 2, Math.min(BAND / 2, height / 2)]; // top centre
+          points.push(first);
+          grid[gi(first[0], first[1])] = 0;
           active.push(0);
 
           while (active.length) {
             const pick = Math.floor(rand() * active.length);
             const parent = points[active[pick]];
             let placed = false;
-
             for (let i = 0; i < k; i++) {
               const angle = rand() * Math.PI * 2;
               const dist = radius * (1 + rand());
@@ -181,156 +257,342 @@ permalink: /tree-demo/
               const y = parent[1] + Math.sin(angle) * dist;
               if (!fits(x, y)) continue;
               points.push([x, y]);
-              grid[gridIndex(x, y)] = points.length - 1;
+              grid[gi(x, y)] = points.length - 1;
               active.push(points.length - 1);
               placed = true;
               break;
             }
-
             if (!placed) active.splice(pick, 1);
           }
-
           return points;
         }
 
-        // --- Prim's minimum spanning tree ----------------------------------
-        // O(n^2), which is the right choice here: no heap, no edge list, and
-        // for a few hundred points it runs in well under a millisecond.
-        function primMST(points) {
+        // Greedy growth in Prim's style. With both biases at zero this is
+        // exactly a minimum spanning tree; above zero it is a directed growth
+        // that still spans every point.
+        function grow(points, { turn, shape }) {
           const n = points.length;
-          const inTree = new Array(n).fill(false);
-          const best = new Float64Array(n).fill(Infinity);
-          const parent = new Int32Array(n).fill(-1);
-          const edges = [];
+          const seed = [shape.w / 2, Math.min(BAND / 2, shape.h / 2)]; // top centre
 
-          best[0] = 0;
+          const radius = (p) => Math.hypot(p[0] - seed[0], p[1] - seed[1]);
+
+          let root = 0;
+          let bestRoot = Infinity;
+          for (let i = 0; i < n; i++) {
+            const d = radius(points[i]);
+            if (d < bestRoot) {
+              bestRoot = d;
+              root = i;
+            }
+          }
+
+          const inTree = new Array(n).fill(false);
+          const cost = new Float64Array(n).fill(Infinity);
+          const parent = new Int32Array(n).fill(-1);
+          const dir = points.map(() => null);
+          const children = points.map(() => []);
+          cost[root] = 0;
+
+          const weight = (u, v) => {
+            const dx = points[v][0] - points[u][0];
+            const dy = points[v][1] - points[u][1];
+            const len = Math.hypot(dx, dy) || 1e-6;
+            let w = len;
+
+            // Edges across the ring's cut are made prohibitively expensive
+            // rather than removed, so the graph stays connected no matter what.
+            if (shape.cut && shape.cut(points[u], points[v], shape)) w *= 1000;
+
+            // Keep going the way you were going.
+            if (turn > 0 && dir[u]) {
+              const cos = (dx * dir[u][0] + dy * dir[u][1]) / len;
+              w *= 1 + turn * (1 - cos) * 0.5;
+            }
+
+            return w;
+          };
 
           for (let iter = 0; iter < n; iter++) {
             let u = -1;
-            let bestDist = Infinity;
+            let best = Infinity;
             for (let v = 0; v < n; v++) {
-              if (!inTree[v] && best[v] < bestDist) {
-                bestDist = best[v];
+              if (!inTree[v] && cost[v] < best) {
+                best = cost[v];
                 u = v;
               }
             }
             if (u === -1) break;
-
             inTree[u] = true;
-            if (parent[u] !== -1) edges.push([parent[u], u]);
-
+            if (parent[u] !== -1) {
+              children[parent[u]].push(u);
+              const dx = points[u][0] - points[parent[u]][0];
+              const dy = points[u][1] - points[parent[u]][1];
+              const len = Math.hypot(dx, dy) || 1;
+              dir[u] = [dx / len, dy / len];
+            }
             for (let v = 0; v < n; v++) {
               if (inTree[v]) continue;
-              const d = (points[u][0] - points[v][0]) ** 2 + (points[u][1] - points[v][1]) ** 2;
-              if (d < best[v]) {
-                best[v] = d;
+              const w = weight(u, v);
+              if (w < cost[v]) {
+                cost[v] = w;
                 parent[v] = u;
               }
             }
           }
 
-          return { edges, parent };
+          return { points, children, root };
         }
 
-        // --- build the scene -----------------------------------------------
-        let scene = null;
-
-        function build(seed) {
-          const rand = mulberry32(seed);
-          const points = poissonDisc(W, H, POINT_SPACING, rand);
-          const { edges } = primMST(points);
-
-          // Children lists, so growth can spread down the tree in parallel:
-          // an edge starts moving the moment its parent node is reached,
-          // rather than waiting its turn in Prim's sequential order. Same
-          // tree, but it grows like a plant instead of a single snake.
-          const children = points.map(() => []);
-          for (const [a, b] of edges) children[a].push(b);
-
-          const length = (a, b) => Math.hypot(points[a][0] - points[b][0], points[a][1] - points[b][1]);
-
-          // Constant growth speed: an edge's duration is proportional to its
-          // length, so the tip moves at a steady rate everywhere.
-          const SPEED = 130; // svg units per second
-          const reachedAt = new Float64Array(points.length).fill(0);
-          const timeline = [];
-          const queue = [0];
-
-          while (queue.length) {
-            const a = queue.shift();
-            for (const b of children[a]) {
-              const dur = length(a, b) / SPEED;
-              const start = reachedAt[a];
-              reachedAt[b] = start + dur;
-              timeline.push({ a, b, start, dur, len: length(a, b) });
-              queue.push(b);
+        // How far the tree reaches below each node: the length of the longest
+        // downward path from it, in svg units.
+        //
+        // This is the measure of how "main" a branch is. Leaf count was the
+        // obvious alternative and it is wrong here: at a junction where the
+        // line continues one way and a bushy cluster of short twigs sits the
+        // other, leaf count picks the cluster, demoting the continuing line by
+        // a level. Around a ribbon that happens a few times, and one side ends
+        // up several levels down and crawling. Longest path always follows the
+        // line that goes furthest, and applies recursively -- inside each
+        // subtree the main line is again the longest path to any of its leaves.
+        function reachLengths({ points, children, root }) {
+          const reach = new Float64Array(points.length);
+          const order = [];
+          const stack = [root];
+          while (stack.length) {
+            const n = stack.pop();
+            order.push(n);
+            for (const c of children[n]) stack.push(c);
+          }
+          for (let i = order.length - 1; i >= 0; i--) {
+            const n = order[i];
+            for (const c of children[n]) {
+              const len = Math.hypot(points[n][0] - points[c][0], points[n][1] - points[c][1]);
+              reach[n] = Math.max(reach[n], len + reach[c]);
             }
           }
-
-          const total = Math.max(...reachedAt);
-
-          // --- DOM ---
-          svg.replaceChildren();
-          const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          svg.append(edgeLayer);
-
-          for (const seg of timeline) {
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("class", "edge");
-            line.setAttribute("x1", points[seg.a][0]);
-            line.setAttribute("y1", points[seg.a][1]);
-            line.setAttribute("x2", points[seg.b][0]);
-            line.setAttribute("y2", points[seg.b][1]);
-            line.style.strokeDasharray = seg.len;
-            line.style.strokeDashoffset = seg.len;
-            seg.el = line;
-            edgeLayer.appendChild(line);
-          }
-
-          scene = { points, timeline, reachedAt, total };
-          readout.textContent = `${points.length} points · ${timeline.length} edges · ${total.toFixed(1)}s`;
-          return scene;
+          return reach;
         }
 
-        // --- animation -------------------------------------------------------
+        // Heavy-path decomposition. From the root, follow whichever child
+        // carries the most leaves -- that run is the spine, level 0. Every
+        // branch off it starts a new run one level down, and so on.
+        //
+        // The root is a special case: all of its children stay at level 0.
+        // Otherwise a seed in the middle makes one side the spine and demotes
+        // the whole other side by a level, so the two halves visibly grow at
+        // different rates instead of spreading together.
+        function skeletonRuns(tree) {
+          const { children, root } = tree;
+          const { points } = tree;
+          const reach = reachLengths(tree);
+          // Compare children by how far the tree continues through each.
+          const through = (from, c) =>
+            Math.hypot(points[from][0] - points[c][0], points[from][1] - points[c][1]) + reach[c];
+          const heaviest = (from, kids) => kids.reduce((a, b) => (through(from, b) > through(from, a) ? b : a));
+
+          const runs = [];
+          const queue = [{ from: root, child: null, level: 0 }];
+
+          while (queue.length) {
+            const item = queue.shift();
+            const seq = [item.from];
+            let cur = item.from;
+            let next = item.child;
+
+            if (next === null) {
+              if (!children[cur].length) continue;
+              next = heaviest(cur, children[cur]);
+              for (const c of children[cur]) if (c !== next) queue.push({ from: cur, child: c, level: item.level });
+            }
+
+            while (next !== null) {
+              seq.push(next);
+              cur = next;
+              const kids = children[cur];
+              if (!kids.length) break;
+              const h = heaviest(cur, kids);
+              for (const c of kids) if (c !== h) queue.push({ from: cur, child: c, level: item.level + 1 });
+              next = h;
+            }
+
+            runs.push({ seq, level: item.level });
+          }
+
+          return runs;
+        }
+
+        // Schedule the runs. Everything starts as soon as it is connected --
+        // no waiting, no phases -- but each level down the hierarchy advances
+        // more slowly. The spine races ahead at full speed and finer branches
+        // trail behind it, so the skeleton resolves first without the drawing
+        // ever stopping and restarting.
+        //
+        // The falloff is harmonic, 1 / (1 + k*level), rather than slowdown^level.
+        // Compounding is the enemy here: at a slowdown of 0.25, an exponential
+        // falloff leaves level 3 running 64x slower than the spine, so the
+        // twigs crawl for an age after everything else has finished. Harmonic
+        // gives level 1 exactly the same ratio while level 3 is only 10x down.
+        function levelSpeed(slowdown, level) {
+          const k = 1 / slowdown - 1;
+          return SPEED / (1 + k * level);
+        }
+
+        function schedule(tree, runs, slowdown) {
+          const len = (a, b) => Math.hypot(tree.points[a][0] - tree.points[b][0], tree.points[a][1] - tree.points[b][1]);
+          const drawnAt = new Float64Array(tree.points.length);
+
+          // runs come out of the decomposition in breadth-first order, so a
+          // run's attachment point is always scheduled before the run itself.
+          for (const run of runs) {
+            const speed = levelSpeed(slowdown, run.level);
+            const start = drawnAt[run.seq[0]];
+            let t = start;
+            for (let i = 1; i < run.seq.length; i++) {
+              t += len(run.seq[i - 1], run.seq[i]) / speed;
+              drawnAt[run.seq[i]] = t;
+            }
+            run.start = start;
+            run.dur = Math.max(0.001, t - start);
+          }
+
+          const total = Math.max(...runs.map((r) => r.start + r.dur));
+          const spineEnd = Math.max(...runs.filter((r) => r.level === 0).map((r) => r.start + r.dur));
+          return { total, spineEnd };
+        }
+
+        // Global catch-up: once the skeleton has finished drawing there is
+        // nothing left to watch except the tail of fine branches, so time
+        // itself speeds up. The rate eases from 1x to `rate` over a short ramp
+        // rather than switching instantly, so there is no visible jolt at the
+        // moment the spine completes.
+        const CATCHUP_RAMP = 0.8; // seconds to reach full rate
+
+        function warp(t, spineEnd, rate) {
+          if (t <= spineEnd || rate <= 1) return t;
+          const d = t - spineEnd;
+          const gain = rate - 1;
+          if (d <= CATCHUP_RAMP) return spineEnd + d + (gain * d * d) / (2 * CATCHUP_RAMP);
+          const rampScene = CATCHUP_RAMP + (gain * CATCHUP_RAMP) / 2;
+          return spineEnd + rampScene + rate * (d - CATCHUP_RAMP);
+        }
+
+        let scene = null;
         let raf = null;
-        let startedAt = 0;
+
+        function build(seed) {
+          const spacing = +el("spacing").value;
+          const rand = mulberry32(seed);
+          const shape = SHAPES[el("shape").value];
+          svg.setAttribute("viewBox", `0 0 ${shape.w} ${shape.h}`);
+          const scatter = poissonDisc(shape, spacing, rand);
+          const tree = grow(scatter, { turn: +el("turn").value, shape });
+
+          const runs = skeletonRuns(tree);
+          const { total, spineEnd } = schedule(tree, runs, +el("slowdown").value);
+
+          svg.replaceChildren();
+          const layer = document.createElementNS(SVGNS, "g");
+          svg.appendChild(layer);
+
+          const drawn = [];
+          for (const run of runs) {
+            const path = document.createElementNS(SVGNS, "path");
+            path.setAttribute("class", "branch");
+            path.setAttribute(
+              "d",
+              `M${run.seq.map((i) => `${tree.points[i][0].toFixed(2)},${tree.points[i][1].toFixed(2)}`).join("L")}`,
+            );
+            layer.appendChild(path);
+            const len = path.getTotalLength();
+            path.style.strokeDasharray = len;
+            path.style.strokeDashoffset = len;
+            drawn.push({ el: path, len, start: run.start, dur: run.dur });
+          }
+
+          scene = { drawn, total, spineEnd };
+          const levels = Math.max(...runs.map((r) => r.level)) + 1;
+          const slowest = SPEED / levelSpeed(+el("slowdown").value, levels - 1);
+          const rate = +el("catchup").value;
+          // Wall-clock time is shorter than scene time once catch-up applies.
+          let wall = spineEnd;
+          const remaining = total - spineEnd;
+          if (rate > 1 && remaining > 0) {
+            const rampScene = CATCHUP_RAMP + ((rate - 1) * CATCHUP_RAMP) / 2;
+            wall += remaining <= rampScene ? CATCHUP_RAMP * (Math.sqrt(1 + (2 * (rate - 1) * remaining) / CATCHUP_RAMP) - 1) / (rate - 1) : CATCHUP_RAMP + (remaining - rampScene) / rate;
+          } else {
+            wall = total;
+          }
+          el("readout").textContent =
+            `${scatter.length} points · ${levels} levels · slowest ${slowest.toFixed(1)}x · skeleton ${spineEnd.toFixed(1)}s · total ${wall.toFixed(1)}s`;
+          el("spacingOut").textContent = `${spacing} → ${scatter.length} points`;
+        }
 
         function render(t) {
-          for (const seg of scene.timeline) {
-            const p = Math.min(1, Math.max(0, (t - seg.start) / seg.dur));
-            seg.el.style.strokeDashoffset = seg.len * (1 - p);
+          for (const b of scene.drawn) {
+            const p = Math.min(1, Math.max(0, (t - b.start) / b.dur));
+            b.el.style.strokeDashoffset = b.len * (1 - p);
           }
         }
 
         function play() {
           cancelAnimationFrame(raf);
-          const speed = parseFloat(document.getElementById("speed").value);
-          startedAt = performance.now();
-
+          const speed = +el("speed").value;
+          const started = performance.now();
+          const rate = +el("catchup").value;
           const frame = (now) => {
-            const t = ((now - startedAt) / 1000) * speed;
+            const elapsed = ((now - started) / 1000) * speed;
+            const t = warp(elapsed, scene.spineEnd, rate);
             render(t);
             if (t < scene.total + 0.3) raf = requestAnimationFrame(frame);
           };
           raf = requestAnimationFrame(frame);
         }
 
-        // Someone who has asked their system to reduce motion gets the
-        // finished tree immediately rather than no tree at all.
         const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const restart = () => (still ? render(scene.total) : play());
 
         let seed = 1;
-        build(seed);
-        still ? render(scene.total) : play();
-
-        document.getElementById("replay").addEventListener("click", () => (still ? render(scene.total) : play()));
-        document.getElementById("regenerate").addEventListener("click", () => {
-          seed = (Math.random() * 1e9) | 0;
+        const rebuild = () => {
           build(seed);
-          still ? render(scene.total) : play();
+          restart();
+        };
+
+        const applyStroke = () => {
+          svg.style.setProperty("--stroke", el("stroke").value);
+          el("strokeOut").textContent = (+el("stroke").value).toFixed(1);
+        };
+        const applySlowdown = () => (el("slowdownOut").textContent = (+el("slowdown").value).toFixed(2));
+        const applyCatchup = () => (el("catchupOut").textContent = `${(+el("catchup").value).toFixed(1)}x`);
+        const applyTurn = () => (el("turnOut").textContent = (+el("turn").value).toFixed(1));
+        const applySpeed = () => (el("speedOut").textContent = `${(+el("speed").value).toFixed(2)}x`);
+
+        el("replay").addEventListener("click", restart);
+        el("regenerate").addEventListener("click", () => {
+          seed = (Math.random() * 1e9) | 0;
+          rebuild();
         });
-        document.getElementById("speed").addEventListener("input", () => (still ? null : play()));
+
+        for (const id of ["spacing", "turn", "shape", "slowdown", "catchup"]) {
+          el(id).addEventListener("input", () => {
+            applyTurn();
+            applySlowdown();
+            applyCatchup();
+            rebuild();
+          });
+        }
+
+        el("stroke").addEventListener("input", applyStroke);
+        el("speed").addEventListener("input", () => {
+          applySpeed();
+          if (!still) play();
+        });
+
+        applyStroke();
+        applyTurn();
+        applySlowdown();
+        applyCatchup();
+        applySpeed();
+        rebuild();
       })();
     </script>
   </body>

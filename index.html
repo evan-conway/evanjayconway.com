@@ -13,16 +13,28 @@ title: Evan Conway
   they're coming later. The old values live in the al-folio _data/socials.yml
   on the `main` branch if they're needed.
 -->
-<h1>Evan Conway</h1>
+<!--
+  The name and bio sit inside a frame that a tree grows around. The svg is
+  drawn by assets/js/tree.js, which sizes itself to this element; the padding
+  on the content is what keeps the text clear of the band.
+-->
+<div class="tree-frame">
+  <svg class="tree-frame-canvas" aria-hidden="true"></svg>
 
-<p>
-  Hi! I'm Evan. I'm currently an intern at Palantir, working on their LLM infrastructure. In the past, I worked at the
-  <a href="https://www.nrl.navy.mil/itd/aic/">Navy Center for Applied Research in Artificial Intelligence</a>, where I
-  researched topics in automated planning. I've also done some mathematical research, including one paper with
-  <a href="https://terrytao.wordpress.com/2025/06/03/decomposing-a-factorial-into-large-factors-second-version/"
-    >Terence Tao</a
-  >. This upcoming fall, I'll be entering CMU as a new master's student, focusing on machine learning.
-</p>
+  <div class="tree-frame-content">
+    <h1>Evan Conway</h1>
+
+    <p>
+      Hi! I'm Evan. I'm currently an intern at Palantir, working on their LLM infrastructure. In the past, I worked at
+      the <a href="https://www.nrl.navy.mil/itd/aic/">Navy Center for Applied Research in Artificial Intelligence</a>,
+      where I researched topics in automated planning. I've also done some mathematical research, including one paper
+      with
+      <a href="https://terrytao.wordpress.com/2025/06/03/decomposing-a-factorial-into-large-factors-second-version/"
+        >Terence Tao</a
+      >. This upcoming fall, I'll be entering CMU as a new master's student, focusing on machine learning.
+    </p>
+  </div>
+</div>
 
 <h2>Recent posts</h2>
 
@@ -53,3 +65,5 @@ title: Evan Conway
     </li>
   {% endfor %}
 </ul>
+
+<script src="{{ '/assets/js/tree.js' | relative_url }}" defer></script>
