@@ -114,9 +114,9 @@ p {
   it introduces rather than floating between two.
 
   Weights are set explicitly rather than left to the browser's default bold.
-  Vollkorn's 700 has heavy, meaty serifs that make a section title noticeably
-  darker than the text it introduces; 600 keeps the hierarchy without the
-  heading dominating. The h1 stays at 700 since a page title should carry.
+  Vollkorn's bold is heavy -- meaty serifs are the face's whole character --
+  so section headings are distinguished mostly by size, at 500, the way a
+  printed book does it. The h1 goes to 600 so a page title still carries.
 
   Margins are in `em`, so they scale with each heading's own size -- a bigger
   heading opens up more space above itself automatically.
@@ -125,19 +125,19 @@ h1,
 h2,
 h3,
 h4 {
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.25;
   margin: 0 0 0.3em;
 }
 
 h1 {
   font-size: 2em;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 h2 {
   font-size: 1.5em;
-  margin-top: 1.9em;
+  margin-top: 1.5em;
 }
 
 h3 {
