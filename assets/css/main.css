@@ -353,25 +353,6 @@ td {
 }
 
 /*
-  Separators come from the stylesheet so the markup stays one line per link.
-  `inline-block` is what keeps the link's underline from running through the
-  separator -- an underline is drawn by the element that sets it, and it skips
-  descendants that establish their own box.
-*/
-.profile-links a:not(:last-child)::after {
-  content: "·";
-  display: inline-block;
-  margin: 0 0.15em 0 0.6em;
-  color: var(--muted);
-  /*
-    The separator lives inside the link, so without this a click on the dot
-    would follow that link. Ignoring pointer events lets clicks and hovers
-    fall through to the paragraph behind it instead.
-  */
-  pointer-events: none;
-}
-
-/*
   On a narrow screen the side bands would eat most of the column -- at 5.8% of
   width each, they take ~44px out of a 375px phone -- and a vertical run that
   thin can barely branch anyway. So the sides go and the top and bottom become
