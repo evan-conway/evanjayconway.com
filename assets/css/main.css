@@ -308,12 +308,24 @@ td {
   transition: none;
 }
 
+/*
+  Ink, held back so the frame sits behind the text rather than competing with
+  it. 1.4px at 55% is what the drawing looked like on a desktop frame before
+  the weight was made size-independent, and it is the intended weight.
+
+  `non-scaling-stroke` is what keeps it there: stroke-width is otherwise
+  measured in drawing units, and since the drawing space is always 1000 units
+  wide, a fixed number of units is a fixed fraction of the frame. That
+  rendered strokes at 1.4px on a desktop frame but 0.7px on a phone, which is
+  why the narrow layout looked faded.
+*/
 .tree-branch {
   fill: none;
   stroke: var(--ink);
-  stroke-width: 2;
+  stroke-width: 1.4px;
   stroke-linecap: butt;
   opacity: 0.55;
+  vector-effect: non-scaling-stroke;
 }
 
 .tree-frame-content {
