@@ -18,9 +18,9 @@
     turn: 2, // how much a change of direction costs when growing
     slowdown: 0.25, // speed of each level of branch relative to the one above
     catchup: 3.5, // how much time accelerates once the skeleton is drawn
-    speed: 130, // svg units per second, for the ring
-    ribbonSpeed: 85, // slower on the narrow layout, where each run is shorter
-    ramp: 0.8, // seconds over which catch-up eases in
+    speed: 195, // svg units per second, for the ring
+    ribbonSpeed: 128, // slower on the narrow layout, where each run is shorter
+    ramp: 0.53, // seconds over which catch-up eases in
     resettle: 800, // ms of stillness after a resize before the tree regrows
     minChange: 24, // px of size change worth regenerating for
     maxPoints: 1400, // ceiling on scatter size, whatever shape the frame is
