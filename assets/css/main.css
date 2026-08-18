@@ -75,13 +75,16 @@ mjx-container[display="true"] {
 
 /*
   The 46rem measure is the single number controlling line length, at roughly
-  80 characters per line.
+  76 characters per line at this size.
 
   Georgia is the fallback because it's the closest widely installed serif, so
   the swap when Vollkorn loads is barely visible.
 
-  Note: Vollkorn has a small x-height, so it reads smaller than its nominal
-  font-size suggests. Raising the size is the lever for that, not the leading.
+  Vollkorn has a small x-height, so it reads smaller than its nominal size --
+  which is why the body is 1.125rem rather than the 1.0625rem that suited the
+  previous face. Everything else that should scale with it (headings, captions,
+  footnotes) is sized in `em` so it tracks this one value; sizes in `rem` are
+  deliberately pinned to the browser's root size instead.
 */
 body {
   max-width: 46rem;
@@ -89,7 +92,7 @@ body {
   padding: 0 1rem 6rem;
 
   font-family: "Vollkorn", Georgia, serif;
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   line-height: 1.65;
   color: #1a1a1a;
   background: #fff;
@@ -119,21 +122,21 @@ h4 {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2em;
 }
 
 h2 {
-  font-size: 1.5rem;
+  font-size: 1.5em;
   margin-top: 3rem;
 }
 
 h3 {
-  font-size: 1.2rem;
+  font-size: 1.2em;
   margin-top: 2rem;
 }
 
 h4 {
-  font-size: 1.05rem;
+  font-size: 1.05em;
   margin-top: 1.5rem;
 }
 
@@ -200,7 +203,7 @@ figure img + img {
 
 figcaption {
   margin-top: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: #666;
   text-align: center;
 }
@@ -236,7 +239,7 @@ td {
   margin-top: 1rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e5e5;
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: #444;
 }
 
@@ -266,7 +269,7 @@ td {
   margin-top: 4rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e5e5;
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: #666;
 }
 
@@ -295,7 +298,7 @@ td {
 }
 
 .publication-venue {
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: #666;
 }
 
@@ -312,5 +315,5 @@ td {
   display: inline-block;
   min-width: 9rem;
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.9em;
 }
