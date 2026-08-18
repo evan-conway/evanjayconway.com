@@ -310,22 +310,20 @@ td {
 
 /*
   Ink, held back so the frame sits behind the text rather than competing with
-  it. 1.4px at 55% is what the drawing looked like on a desktop frame before
-  the weight was made size-independent, and it is the intended weight.
+  it.
 
-  `non-scaling-stroke` is what keeps it there: stroke-width is otherwise
-  measured in drawing units, and since the drawing space is always 1000 units
-  wide, a fixed number of units is a fixed fraction of the frame. That
-  rendered strokes at 1.4px on a desktop frame but 0.7px on a phone, which is
-  why the narrow layout looked faded.
+  The width comes from tree.js as `--tree-stroke`, in drawing units, worked
+  out per build so it lands on the same pixel weight whatever the frame's
+  size. Do not replace this with `vector-effect: non-scaling-stroke`: that
+  also moves the dash pattern into screen space, which breaks the growth
+  animation. See the note in tree.js.
 */
 .tree-branch {
   fill: none;
   stroke: var(--ink);
-  stroke-width: 1.4px;
+  stroke-width: var(--tree-stroke, 2);
   stroke-linecap: butt;
   opacity: 0.55;
-  vector-effect: non-scaling-stroke;
 }
 
 .tree-frame-content {

@@ -13,6 +13,7 @@
 
   const SETTINGS = {
     bandPx: 41, // band thickness on screen, in css pixels
+    strokePx: 1.4, // branch weight on screen, in css pixels
     spacing: 9, // minimum distance between scattered points
     turn: 2, // how much a change of direction costs when growing
     slowdown: 0.25, // speed of each level of branch relative to the one above
@@ -370,6 +371,19 @@
     for (const spec of specs) spec.spacing = spacing;
 
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+
+    // Stroke width in drawing units, chosen so it lands on the intended pixel
+    // weight at this frame's size.
+    //
+    // The obvious way to do this is `vector-effect: non-scaling-stroke`, and
+    // it is wrong here: that moves the whole stroke computation into screen
+    // space, dash pattern included. `stroke-dasharray: 1504` then means 1504
+    // *pixels* while the path is only ~1059px long on screen, so every run
+    // finishes drawing at ~70% of its progress. Start times are unaffected, so
+    // the long skeleton runs appear to complete early while their branches
+    // have not begun -- the skeleton races ahead and the detail lags.
+    svg.style.setProperty("--tree-stroke", ((SETTINGS.strokePx / box.width) * 1000).toFixed(2));
+
     svg.replaceChildren();
     const layer = document.createElementNS(SVGNS, "g");
     svg.appendChild(layer);
