@@ -12,8 +12,14 @@
 
 /*
   Warm paper. A cream ground and a warm near-black, which is what a printed
-  page looks like and what Vollkorn is drawn for; oxblood for links, dark
-  enough to read as considered rather than decorative.
+  page looks like and what Vollkorn is drawn for.
+
+  The accent is a saturated blue rather than something quieter on purpose.
+  WCAG asks for 3:1 between link text and the text around it where colour is
+  what marks a link; this clears that at 3.57, which is what stops links
+  reading as "dark text that happens to be tinted". The cost is that it sits
+  at 4.54 against the paper -- the two thresholds pull in opposite directions,
+  since separating a link from the ink means lightening it toward the ground.
 */
 :root {
   --paper: #fdfbf7;
@@ -21,7 +27,7 @@
   --muted: #6b6257;
   --rule: #e6dfd3;
   --surface: #f4eee3;
-  --accent: #7b2d26;
+  --accent: #0b74d5;
 }
 
 /* ----------------------------------------------------------------- typeface */
