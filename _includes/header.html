@@ -6,7 +6,16 @@
   generated from a list, so that adding one is a single obvious edit.
 -->
 <header class="site-header">
-  <a href="{{ '/' | relative_url }}">{{ site.title }}</a>
+  {%- comment -%}
+    On the landing page the site name is the page's heading, so it is marked up
+    as the h1 there. Every other page has its own h1 in its content, and this
+    is just a link home.
+  {%- endcomment -%}
+  {% if page.url == '/' %}
+    <h1><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>
+  {% else %}
+    <a href="{{ '/' | relative_url }}">{{ site.title }}</a>
+  {% endif %}
   <nav>
     <a href="{{ '/posts/' | relative_url }}">Posts</a>
   </nav>

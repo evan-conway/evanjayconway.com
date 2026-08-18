@@ -18,18 +18,29 @@
 <!-- Tells search engines which URL is the real one for this page. -->
 <link rel="canonical" href="{{ page.url | absolute_url }}" />
 
-<link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" />
+<!--
+  The `?v=` is the site's build time. Without it browsers happily serve a
+  cached stylesheet after a rebuild, which during development means every
+  change appears not to have worked until a hard reload.
+-->
+<link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}?v={{ site.time | date: '%s' }}" />
 
 <!--
-  MathJax renders the LaTeX in posts. It loads on every page, which is a
-  wasted request on pages without math, but it means math can never silently
-  fail to render because someone forgot to set a flag in the front matter.
+  MathJax renders the LaTeX in posts.
+
+  Every post loads it, so math in a post can never silently fail to render.
+  Other pages have to ask for it with `math: true` in their front matter --
+  the library is about a megabyte, and even served from cache it costs a
+  ~90ms main-thread stall while it parses and runs its startup sweep, which
+  is visible as a stutter in anything animating on the page.
 
   The inlineMath line is required: kramdown converts $$...$$ display math into
   \[...\] (which MathJax reads by default) but passes single-$ inline math
   through untouched, so MathJax has to be told to look for it.
 -->
-<script>
-  window.MathJax = { tex: { inlineMath: [["$", "$"]] } };
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% if page.layout == 'post' or page.math %}
+  <script>
+    window.MathJax = { tex: { inlineMath: [["$", "$"]] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endif %}

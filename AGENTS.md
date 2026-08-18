@@ -133,6 +133,10 @@ that work, and all three are easy to break:
 2. **The `inlineMath` config in `head.html`.** kramdown turns `$$...$$` into
    `\[...\]`, which MathJax reads by default, but leaves single-`$` inline math
    as plain text -- so MathJax has to be configured to look for it.
+
+   MathJax loads on every post automatically. A **page** that needs math has to
+   set `math: true` in its front matter, because the library is a megabyte and
+   stalls the main thread for ~90ms on startup even from cache.
 3. **`_includes/figure.liquid`** exists because the post calls
    `{% include figure.liquid path="..." %}`. It's a one-line `<img>` wrapper,
    kept only so the post's markdown doesn't have to be rewritten.

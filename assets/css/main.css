@@ -299,6 +299,14 @@ td {
 }
 
 /*
+  The last block inside the frame keeps its bottom margin otherwise, which
+  lands under the padding and leaves the text sitting visibly high in the box.
+*/
+.tree-frame-content > :last-child {
+  margin-bottom: 0;
+}
+
+/*
   On a narrow screen the band would eat most of the width, so the frame is
   dropped entirely and the bio is left to stand on its own.
 */
@@ -326,8 +334,16 @@ td {
   text-decoration: none;
 }
 
-.site-header > a {
+.site-header > a,
+.site-header h1 {
   font-weight: 600;
+}
+
+/* The h1 the landing page puts here should look no different to the link. */
+.site-header h1 {
+  margin: 0;
+  font-size: 1em;
+  line-height: inherit;
 }
 
 .site-header nav a {

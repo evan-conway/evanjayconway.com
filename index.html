@@ -22,8 +22,6 @@ title: Evan Conway
   <svg class="tree-frame-canvas" aria-hidden="true"></svg>
 
   <div class="tree-frame-content">
-    <h1>Evan Conway</h1>
-
     <p>
       Hi! I'm Evan. I'm currently an intern at Palantir, working on their LLM infrastructure. In the past, I worked at
       the <a href="https://www.nrl.navy.mil/itd/aic/">Navy Center for Applied Research in Artificial Intelligence</a>,
@@ -66,4 +64,4 @@ title: Evan Conway
   {% endfor %}
 </ul>
 
-<script src="{{ '/assets/js/tree.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/js/tree.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>

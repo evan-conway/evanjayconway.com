@@ -21,6 +21,7 @@
     ramp: 0.8, // seconds over which catch-up eases in
     resettle: 800, // ms of stillness after a resize before the tree regrows
     minChange: 24, // px of size change worth regenerating for
+    maxPoints: 1400, // ceiling on scatter size, whatever shape the frame is
   };
 
   const mulberry32 = (seed) =>
@@ -275,6 +276,9 @@
     const svg = frame.querySelector(".tree-frame-canvas");
     const box = frame.getBoundingClientRect();
     if (box.width < 10 || box.height < 10) return;
+    // The stylesheet hides the canvas on narrow screens; building a tree
+    // nobody can see is pure cost, and a narrow frame is the expensive case.
+    if (getComputedStyle(svg).display === "none") return;
 
     // The drawing space is always 1000 units wide, with height following the
     // frame's real proportions, so the band keeps a constant thickness
@@ -292,8 +296,20 @@
 
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
+    // Point spacing is defined against a 1000-unit-wide space, so a tall
+    // narrow frame -- a phone, or a half-width window -- maps to a viewBox
+    // thousands of units deep and the band area explodes with it. Left
+    // unbounded that took the scatter from ~440 points to 3772 and the build
+    // from 65ms to 1.9 seconds, freezing the page. Thin the scatter instead:
+    // the tree gets coarser in shapes that would otherwise be unusable.
+    const bandArea = w * h - Math.max(0, w - 2 * band) * Math.max(0, h - 2 * band);
+    // ~1.49 * spacing^2 of area per point, measured from the blue-noise scatter.
+    const estimate = bandArea / (1.49 * SETTINGS.spacing * SETTINGS.spacing);
+    const spacing =
+      estimate > SETTINGS.maxPoints ? Math.sqrt(bandArea / (1.49 * SETTINGS.maxPoints)) : SETTINGS.spacing;
+
     const rand = mulberry32((Math.random() * 1e9) | 0);
-    const tree = grow(poissonDisc(shape, SETTINGS.spacing, rand), shape);
+    const tree = grow(poissonDisc(shape, spacing, rand), shape);
     const runs = skeletonRuns(tree);
     const { total, spineEnd } = schedule(tree, runs);
 
@@ -302,17 +318,22 @@
     svg.appendChild(layer);
 
     for (const run of runs) {
+      // Round once, then use the same numbers for the path data and for its
+      // length. getTotalLength() would give the same answer but forces a
+      // layout per path, and there are several hundred of them.
+      const pts = run.seq.map((i) => [+tree.points[i][0].toFixed(1), +tree.points[i][1].toFixed(1)]);
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+
       const path = document.createElementNS(SVGNS, "path");
       path.setAttribute("class", "tree-branch");
-      path.setAttribute(
-        "d",
-        `M${run.seq.map((i) => `${tree.points[i][0].toFixed(1)},${tree.points[i][1].toFixed(1)}`).join("L")}`,
-      );
+      path.setAttribute("d", `M${pts.map((p) => `${p[0]},${p[1]}`).join("L")}`);
       layer.appendChild(path);
+
       run.el = path;
-      run.len = path.getTotalLength();
-      path.style.strokeDasharray = run.len;
-      path.style.strokeDashoffset = run.len;
+      run.len = len;
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = len;
     }
 
     // Someone who has asked their system to reduce motion gets the finished
@@ -322,10 +343,6 @@
       return;
     }
 
-    // The clock starts when the page is actually being looked at. Browsers
-    // don't run animation frames in a hidden tab, so a page opened in a
-    // background tab would otherwise stamp its start time on load and, by the
-    // time anyone switched to it, jump straight to a fully grown tree.
     const play = () => {
       const started = performance.now();
       const step = (now) => {
@@ -336,19 +353,50 @@
       requestAnimationFrame(step);
     };
 
-    if (document.hidden) {
-      document.addEventListener("visibilitychange", function once() {
-        if (document.hidden) return;
-        document.removeEventListener("visibilitychange", once);
-        play();
-      });
-    } else {
-      play();
-    }
+    play();
   }
 
-  function init() {
-    for (const frame of document.querySelectorAll(".tree-frame")) {
+  // Wait until the frame can be measured correctly.
+  //
+  // A hidden tab first: browsers run no animation frames there, so a page
+  // opened in a background tab would otherwise stamp its start time on load
+  // and, by the time anyone looked, jump straight to a grown tree.
+  //
+  // Then `load` and the webfont swap. Vollkorn changes this frame's height by
+  // ~30px against the fallback, so a tree built before the swap is drawn to
+  // the wrong shape -- and the reflow would trip the resize handler, hiding
+  // the tree and regrowing it a beat later.
+  async function settled() {
+    if (document.hidden) {
+      await new Promise((resolve) => {
+        document.addEventListener("visibilitychange", function once() {
+          if (document.hidden) return;
+          document.removeEventListener("visibilitychange", once);
+          resolve();
+        });
+      });
+    }
+
+    if (document.readyState !== "complete") {
+      await new Promise((resolve) => addEventListener("load", resolve, { once: true }));
+    }
+
+    // Optional and failure-tolerant: a missing or rejected font promise is not
+    // worth refusing to draw over.
+    await Promise.allSettled([document.fonts ? document.fonts.ready : null]);
+  }
+
+  async function init() {
+    const frames = [...document.querySelectorAll(".tree-frame")];
+    if (!frames.length) return;
+
+    // Wait before measuring anything. The webfont swap alone changes this
+    // frame's height by ~30px, so a tree built before it would be drawn to
+    // the wrong shape -- and the reflow would trip the resize handler below,
+    // hiding the tree and regrowing it a beat later.
+    await settled();
+
+    for (const frame of frames) {
       const svg = frame.querySelector(".tree-frame-canvas");
       build(frame);
 
