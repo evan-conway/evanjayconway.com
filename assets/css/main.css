@@ -12,25 +12,25 @@
 /* ----------------------------------------------------------------- typeface */
 
 /*
-  Literata, self-hosted from assets/fonts so pages make no third-party
-  request. Both files are variable fonts: one covers every weight from 200 to
-  900, which is why there's no separate bold file to add.
+  Vollkorn, self-hosted from assets/fonts so pages make no third-party
+  request. The upright file is a variable font covering weights 400-900,
+  which is why there's no separate bold file to add.
 
   `swap` means text renders immediately in the fallback and switches to
-  Literata when it arrives, rather than the page sitting blank.
+  Vollkorn when it arrives, rather than the page sitting blank.
 */
 @font-face {
-  font-family: "Literata";
-  src: url("/assets/fonts/literata-variable.woff2") format("woff2");
-  font-weight: 200 900;
+  font-family: "Vollkorn";
+  src: url("/assets/fonts/vollkorn-variable.woff2") format("woff2");
+  font-weight: 400 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Literata";
-  src: url("/assets/fonts/literata-400-italic.woff2") format("woff2");
-  font-weight: 200 900;
+  font-family: "Vollkorn";
+  src: url("/assets/fonts/vollkorn-400-italic.woff2") format("woff2");
+  font-weight: 400 900;
   font-style: italic;
   font-display: swap;
 }
@@ -78,14 +78,17 @@ mjx-container[display="true"] {
   80 characters per line.
 
   Georgia is the fallback because it's the closest widely installed serif, so
-  the swap when Literata loads is barely visible.
+  the swap when Vollkorn loads is barely visible.
+
+  Note: Vollkorn has a small x-height, so it reads smaller than its nominal
+  font-size suggests. Raising the size is the lever for that, not the leading.
 */
 body {
   max-width: 46rem;
   margin: 0 auto;
   padding: 0 1rem 6rem;
 
-  font-family: "Literata", Georgia, serif;
+  font-family: "Vollkorn", Georgia, serif;
   font-size: 1.0625rem;
   line-height: 1.65;
   color: #1a1a1a;
