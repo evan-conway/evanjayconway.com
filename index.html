@@ -38,7 +38,7 @@ title: Evan Conway
     -->
     <p class="profile-links">
       <a href="https://github.com/evan-conway">GitHub</a> ·
-      <a href="mailto:evanjayconway@gmail.com">Email</a> ·
+      <a class="email" data-user="evanjayconway" data-domain="gmail.com">Email</a> ·
       <a href="{{ '/assets/pdf/cv.pdf' | relative_url }}">Resume</a> ·
       <a href="https://x.com/evanjayconway">X</a> ·
       <a href="https://www.linkedin.com/in/evan-conway-cs">LinkedIn</a>
@@ -75,5 +75,25 @@ title: Evan Conway
     </li>
   {% endfor %}
 </ul>
+
+<!--
+  The email address is assembled here rather than written into the page, so
+  the served html contains no user@domain string for a harvester to pick up.
+  Most scrapers parse html without running scripts, which is the whole point;
+  a determined one will still get it.
+
+  This runs immediately rather than on DOMContentLoaded, and the link is
+  further up the page, so the href is in place long before anyone can click
+  it. With scripting off the word "Email" simply renders as text.
+-->
+<script>
+  (() => {
+    const link = document.querySelector("a.email");
+    if (!link) return;
+    const address = `${link.dataset.user}@${link.dataset.domain}`;
+    link.href = `mailto:${address}`;
+    link.title = address;
+  })();
+</script>
 
 <script src="{{ '/assets/js/tree.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
