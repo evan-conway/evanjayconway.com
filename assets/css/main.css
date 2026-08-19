@@ -287,12 +287,11 @@ td {
   margin: 1rem 0 3rem;
 
   /*
-    Which layout the tree draws. Read by tree.js, so the breakpoint lives here
-    with the rest of the styling rather than as a duplicated number in the
-    script. `ring` frames the content on all four sides; `ribbons` is two
-    independent trees, one above and one below.
+    Band thickness, read by tree.js. It lives here so the narrow layout's
+    thinner band sits with the rest of the responsive styling rather than as a
+    second breakpoint in the script.
   */
-  --tree-shape: ring;
+  --tree-band: 41px;
 }
 
 .tree-frame-canvas {
@@ -361,33 +360,28 @@ td {
 }
 
 /*
-  On a narrow screen the side bands would eat most of the column -- 82px out of
-  a 375px phone -- and a vertical run that thin can barely branch anyway. A
-  band above the text as well as below crowded it and pushed the bio down the
-  page, so only the one underneath survives, and the text runs full width.
+  A phone keeps the same ring, but pays for it in line length: each side band
+  costs its full width out of a column of ~360px. Two things buy that back --
+  a thinner band, and slightly smaller text inside the frame -- which together
+  give ~35 characters a line instead of 28.
+
+  The header's own spacing drops to almost nothing, because the top of the
+  ring is itself the separation between the header and the text.
 */
 @media (max-width: 34rem) {
-  /*
-    Tighter above: the header's own bottom padding is the whole gap now, since
-    the frame's top margin goes.
-  */
   .site-header {
-    padding-bottom: 1.25em;
+    padding-bottom: 0.5em;
   }
 
   .tree-frame {
-    --tree-shape: ribbon;
+    --tree-band: 24px;
     margin: 0;
   }
 
-  /*
-    The band sits at the bottom of the frame, so this padding is what holds
-    the text off it: 82px of padding less the 41px band leaves 41px of air
-    above it, matching the 41px the next heading's top margin leaves below.
-    The ribbon therefore sits centred in the gap between the two sections.
-  */
+  /* 36px of padding holds the text clear of a 24px band on every side. */
   .tree-frame-content {
-    padding: 0 0 5.125rem;
+    padding: 2.25rem;
+    font-size: 1rem;
   }
 }
 

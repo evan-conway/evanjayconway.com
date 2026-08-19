@@ -12,14 +12,13 @@
   const SVGNS = "http://www.w3.org/2000/svg";
 
   const SETTINGS = {
-    bandPx: 41, // band thickness on screen, in css pixels
+    bandPx: 41, // fallback band thickness in css pixels; --tree-band overrides
     strokePx: 1.4, // branch weight on screen, in css pixels
     spacing: 9, // minimum distance between scattered points
     turn: 2, // how much a change of direction costs when growing
     slowdown: 0.25, // speed of each level of branch relative to the one above
     catchup: 3.5, // how much time accelerates once the skeleton is drawn
     speed: 195, // svg units per second, for the ring
-    ribbonSpeed: 170, // the narrow layout's single ribbon
     ramp: 0.53, // seconds over which catch-up eases in
     resettle: 800, // ms of stillness after a resize before the tree regrows
     minChange: 24, // px of size change worth regenerating for
@@ -313,27 +312,6 @@
     area: w * h - Math.max(0, w - 2 * band) * Math.max(0, h - 2 * band),
   });
 
-  // A horizontal band across the bottom. Two ends, no loop, so nothing to cut.
-  const ribbonSpec = (w, h, band) => ({
-    w,
-    h,
-    inside: (x, y) => y > h - band,
-    seed: [w / 2, h - band / 2],
-    cut: () => false,
-    speed: SETTINGS.ribbonSpeed,
-    area: w * band,
-  });
-
-  // Which specs to grow. The stylesheet decides, via `--tree-shape` on the
-  // frame, so the breakpoint lives with the styling rather than being
-  // duplicated as a number here.
-  function specsFor(frame, w, h, band) {
-    const layout = getComputedStyle(frame).getPropertyValue("--tree-shape").trim();
-
-    if (layout === "ribbon") return [ribbonSpec(w, h, band)];
-    return [ringSpec(w, h, band)];
-  }
-
   function build(frame) {
     const svg = frame.querySelector(".tree-frame-canvas");
     const box = frame.getBoundingClientRect();
@@ -354,9 +332,14 @@
     // fixed *fraction* of the width -- which on a phone came out half as thick
     // as on a desktop and looked spindly. Converting from pixels keeps it the
     // same weight at every size.
-    const band = (SETTINGS.bandPx / box.width) * 1000;
+    //
+    // The stylesheet supplies the pixel figure through --tree-band, so the
+    // narrow layout's thinner band lives with the rest of the responsive
+    // styling rather than as a second breakpoint in here.
+    const bandPx = parseFloat(getComputedStyle(frame).getPropertyValue("--tree-band")) || SETTINGS.bandPx;
+    const band = (bandPx / box.width) * 1000;
 
-    const specs = specsFor(frame, w, h, band);
+    const specs = [ringSpec(w, h, band)];
 
     // Spacing is defined against a 1000-unit-wide space, so a tall narrow
     // frame maps to a viewBox thousands of units deep and the area to fill
