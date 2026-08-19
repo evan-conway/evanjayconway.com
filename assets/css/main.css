@@ -396,6 +396,13 @@ td {
   line-height: inherit;
 }
 
+/* The header's own gap sits between the name and the nav; this spaces the
+   nav's own links from each other. */
+.site-header nav {
+  display: flex;
+  gap: 1.2em;
+}
+
 .site-header nav a {
   color: var(--muted);
 }
@@ -435,6 +442,40 @@ td {
 .publication-venue {
   font-size: 0.9em;
   color: var(--muted);
+}
+
+/*
+  Reading list: title, author, month. A grid rather than a table so the three
+  columns line up on a wide screen and stack on a narrow one without markup
+  that pretends to be tabular data.
+*/
+.reading-list {
+  padding: 0;
+  list-style: none;
+}
+
+.reading-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 1.5em;
+  margin-bottom: 0.8em;
+}
+
+.reading-author,
+.reading-month {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.reading-month {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.reading-author {
+  grid-column: 1;
 }
 
 .post-list {

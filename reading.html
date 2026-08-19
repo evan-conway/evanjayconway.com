@@ -1,0 +1,23 @@
+---
+layout: page
+title: Reading
+permalink: /reading/
+description: Books Evan Conway has read, by year.
+---
+
+<!--
+  Entries live in _data/reading.yml -- add books there, not here.
+-->
+{% for year in site.data.reading %}
+  <h2>{{ year.year }}</h2>
+
+  <ul class="reading-list">
+    {% for book in year.books %}
+      <li>
+        <span class="reading-title">{{ book.title }}</span>
+        <span class="reading-author">{{ book.author }}</span>
+        <span class="reading-month">{{ book.month }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% endfor %}
