@@ -302,13 +302,13 @@
   // hold a loop, and left to itself Prim's breaks the ring at an arbitrary
   // edge, sending growth most of the way round one side. Cutting it opposite
   // the seed splits it into halves that meet at the bottom.
-  const ringSpec = (w, h, band) => ({
+  const ringSpec = (w, h, band, speed) => ({
     w,
     h,
     inside: (x, y) => x < band || x > w - band || y < band || y > h - band,
     seed: [w / 2, band / 2],
     cut: (a, b) => (a[0] - w / 2) * (b[0] - w / 2) < 0 && a[1] > h - band && b[1] > h - band,
-    speed: SETTINGS.speed,
+    speed,
     area: w * h - Math.max(0, w - 2 * band) * Math.max(0, h - 2 * band),
   });
 
@@ -336,10 +336,12 @@
     // The stylesheet supplies the pixel figure through --tree-band, so the
     // narrow layout's thinner band lives with the rest of the responsive
     // styling rather than as a second breakpoint in here.
-    const bandPx = parseFloat(getComputedStyle(frame).getPropertyValue("--tree-band")) || SETTINGS.bandPx;
+    const style = getComputedStyle(frame);
+    const bandPx = parseFloat(style.getPropertyValue("--tree-band")) || SETTINGS.bandPx;
     const band = (bandPx / box.width) * 1000;
+    const speed = parseFloat(style.getPropertyValue("--tree-speed")) || SETTINGS.speed;
 
-    const specs = [ringSpec(w, h, band)];
+    const specs = [ringSpec(w, h, band, speed)];
 
     // Spacing is defined against a 1000-unit-wide space, so a tall narrow
     // frame maps to a viewBox thousands of units deep and the area to fill
