@@ -396,15 +396,21 @@ td {
   line-height: inherit;
 }
 
-/* The header's own gap sits between the name and the nav; this spaces the
-   nav's own links from each other. */
-.site-header nav {
-  display: flex;
-  gap: 1.2em;
+/* Nav links are separated by a middot written into the markup, the same way
+   the profile links are -- one separator convention for the whole site. The
+   margins open the space around that dot; the first and last are zeroed so
+   the row still sits flush against the edges of the header. */
+.site-header nav a {
+  margin: 0 0.5em;
+  color: var(--muted);
 }
 
-.site-header nav a {
-  color: var(--muted);
+.site-header nav a:first-child {
+  margin-left: 0;
+}
+
+.site-header nav a:last-child {
+  margin-right: 0;
 }
 
 .site-footer {
