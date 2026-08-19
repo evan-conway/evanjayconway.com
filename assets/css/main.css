@@ -359,13 +359,27 @@ td {
   page, so only the one underneath survives, and the text runs full width.
 */
 @media (max-width: 34rem) {
-  .tree-frame {
-    --tree-shape: ribbon;
+  /*
+    Tighter above: the header's own bottom padding is the whole gap now, since
+    the frame's top margin goes.
+  */
+  .site-header {
+    padding-bottom: 1.25em;
   }
 
-  /* Nothing above to clear now; the padding below keeps clear of the band. */
+  .tree-frame {
+    --tree-shape: ribbon;
+    margin: 0;
+  }
+
+  /*
+    The band sits at the bottom of the frame, so this padding is what holds
+    the text off it -- 72px of padding leaves ~31px of air above a 41px band.
+    Below it there is the heading's own 40px top margin, so the ribbon ends up
+    sitting in the gap rather than hugging the top of it.
+  */
   .tree-frame-content {
-    padding: 0 0 3.75rem;
+    padding: 0 0 4.5rem;
   }
 }
 
