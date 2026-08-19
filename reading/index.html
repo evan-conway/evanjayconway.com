@@ -21,6 +21,26 @@
 <meta name="description" content="Books Evan Conway has read, by year." />
 
 <!--
+  TEMPORARY, for judging the mobile layout on a real device: ?shape=ring or
+  ?shape=ribbon overrides what the stylesheet would pick, and applies the side
+  padding that shape needs. Remove once decided.
+-->
+<script>
+  (() => {
+    const shape = new URLSearchParams(location.search).get("shape");
+    if (shape !== "ring" && shape !== "ribbon") return;
+    addEventListener("DOMContentLoaded", () => {
+      const frame = document.querySelector(".tree-frame");
+      if (!frame) return;
+      frame.style.setProperty("--tree-shape", shape);
+      frame.style.margin = "0";
+      frame.querySelector(".tree-frame-content").style.padding =
+        shape === "ring" ? "3.25rem" : "0 0 5.125rem";
+    });
+  })();
+</script>
+
+<!--
   The tab icon: the site's initial in Vollkorn, drawn as a path so it does not
   depend on the font loading. One svg covers every current browser; the png is
   for iOS home screens, which do not take svg.
@@ -43,7 +63,7 @@
   cached stylesheet after a rebuild, which during development means every
   change appears not to have worked until a hard reload.
 -->
-<link rel="stylesheet" href="/assets/css/main.css?v=1787106255" />
+<link rel="stylesheet" href="/assets/css/main.css?v=1787106392" />
 
 <!--
   MathJax renders the LaTeX in posts.
