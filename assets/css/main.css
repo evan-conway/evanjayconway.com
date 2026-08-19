@@ -374,12 +374,12 @@ td {
 
   /*
     The band sits at the bottom of the frame, so this padding is what holds
-    the text off it -- 72px of padding leaves ~31px of air above a 41px band.
-    Below it there is the heading's own 40px top margin, so the ribbon ends up
-    sitting in the gap rather than hugging the top of it.
+    the text off it: 82px of padding less the 41px band leaves 41px of air
+    above it, matching the 41px the next heading's top margin leaves below.
+    The ribbon therefore sits centred in the gap between the two sections.
   */
   .tree-frame-content {
-    padding: 0 0 4.5rem;
+    padding: 0 0 5.125rem;
   }
 }
 
