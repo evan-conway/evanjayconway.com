@@ -156,6 +156,22 @@ repo root to use it again.
 
 ## Deployment
 
-Not set up on this branch yet. The live site is still served from `main`, which
-builds the old al-folio site and pushes `_site` to the `gh-pages` branch. The
-custom domain depends on a `CNAME` file surviving on `gh-pages`.
+Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the
+site and pushes `_site` to the `gh-pages` branch. That branch is what GitHub
+Pages serves; nothing else publishes.
+
+Two things worth knowing:
+
+- **`gh-pages` is only written on a successful build**, so a commit that breaks
+  the build leaves the live site up rather than taking it down.
+- **The custom domain comes from the `CNAME` file in the repository root.**
+  Jekyll copies it into `_site` on every build. It used to exist only on
+  `gh-pages`, where a deploy could silently wipe it and drop the domain.
+
+To roll back, push a known-good commit straight to the branch Pages serves:
+
+```bash
+git push origin <sha>:gh-pages --force
+```
+
+That takes effect immediately and independently of what `main` says.
