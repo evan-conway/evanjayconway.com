@@ -292,6 +292,13 @@ td {
     second breakpoint in the script.
   */
   --tree-band: 41px;
+
+  /*
+    Growth speed in svg units per second, also read by tree.js. A phone gets a
+    faster tree: its ring is shorter in absolute terms but the animation reads
+    as slower on a small screen.
+  */
+  --tree-speed: 195;
 }
 
 .tree-frame-canvas {
@@ -357,32 +364,6 @@ td {
   margin-top: 1.5em;
   text-align: center;
   font-size: 0.95em;
-}
-
-/*
-  A phone keeps the same ring, but pays for it in line length: each side band
-  costs its full width out of a column of ~360px. Two things buy that back --
-  a thinner band, and slightly smaller text inside the frame -- which together
-  give ~35 characters a line instead of 28.
-
-  The header's own spacing drops to almost nothing, because the top of the
-  ring is itself the separation between the header and the text.
-*/
-@media (max-width: 34rem) {
-  .site-header {
-    padding-bottom: 0.5em;
-  }
-
-  .tree-frame {
-    --tree-band: 24px;
-    margin: 0;
-  }
-
-  /* 36px of padding holds the text clear of a 24px band on every side. */
-  .tree-frame-content {
-    padding: 2.25rem;
-    font-size: 1rem;
-  }
 }
 
 /* ------------------------------------------------------- site chrome & lists */
@@ -525,8 +506,42 @@ td {
   white-space: nowrap;
 }
 
-/* Too narrow for two columns: the date sits under its title instead. */
+/* ------------------------------------------------------- narrow screens -- */
+
+/*
+  Everything that changes on a phone, in one block at the end of the file.
+  These rules are deliberately last: they are no more specific than the ones
+  they override, so if they sat earlier the later base rule would simply win.
+  That is exactly what happened to the header padding below -- it was written
+  above `.site-header` and had no effect at all.
+
+  The ring is kept, and paid for in line length: each side band costs its full
+  width out of a column of ~360px. A thinner band and slightly smaller text in
+  the frame buy that back, giving ~35 characters a line rather than 28.
+*/
 @media (max-width: 34rem) {
+  /*
+    Both sides, not just the bottom: the ring's own top edge is the separation
+    between the header and the text, so the header needs very little of its
+    own.
+  */
+  .site-header {
+    padding: 0.75em 0 0.5em;
+  }
+
+  .tree-frame {
+    --tree-band: 24px;
+    --tree-speed: 293;
+    margin: 0;
+  }
+
+  /* 36px of padding holds the text clear of a 24px band on every side. */
+  .tree-frame-content {
+    padding: 2.25rem;
+    font-size: 1rem;
+  }
+
+  /* Too narrow for two columns: the date sits under its title instead. */
   .post-list li {
     grid-template-columns: 1fr;
     margin-bottom: 1em;
