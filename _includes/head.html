@@ -9,6 +9,14 @@
 {% if page.description %}<meta name="description" content="{{ page.description }}" />{% endif %}
 
 <!--
+  The tab icon: the site's initial in Vollkorn, drawn as a path so it does not
+  depend on the font loading. One svg covers every current browser; the png is
+  for iOS home screens, which do not take svg.
+-->
+<link rel="icon" href="{{ '/assets/img/favicon.svg' | relative_url }}" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="{{ '/assets/img/apple-touch-icon.png' | relative_url }}" />
+
+<!--
   The body font is referenced from main.css, which the browser only reads
   after fetching it. Preloading starts the font download in parallel instead,
   which shortens the moment where text renders in the fallback serif.
