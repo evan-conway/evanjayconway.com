@@ -1,0 +1,46 @@
+# Builds the site and publishes it to the gh-pages branch, which is what
+# GitHub Pages serves. The custom domain comes from the CNAME file in the
+# repository root: Jekyll copies it into _site on every build, so a deploy
+# cannot drop it.
+#
+# gh-pages is only written on a successful build, so a broken commit leaves
+# the live site untouched rather than taking it down.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never let two deploys race each other onto the same branch.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          # Installs from Gemfile.lock and caches the result.
+          bundler-cache: true
+
+      - name: Build
+        run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+
+      - name: Publish
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: _site
+          branch: gh-pages
