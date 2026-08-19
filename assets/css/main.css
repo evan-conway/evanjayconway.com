@@ -353,19 +353,19 @@ td {
 }
 
 /*
-  On a narrow screen the side bands would eat most of the column -- at 5.8% of
-  width each, they take ~44px out of a 375px phone -- and a vertical run that
-  thin can barely branch anyway. So the sides go and the top and bottom become
-  two independent trees, which also lets the text run the full width.
+  On a narrow screen the side bands would eat most of the column -- 82px out of
+  a 375px phone -- and a vertical run that thin can barely branch anyway. A
+  band above the text as well as below crowded it and pushed the bio down the
+  page, so only the one underneath survives, and the text runs full width.
 */
 @media (max-width: 34rem) {
   .tree-frame {
-    --tree-shape: ribbons;
+    --tree-shape: ribbon;
   }
 
-  /* Clear of the ribbons, which are ~41px thick. */
+  /* Nothing above to clear now; the padding below keeps clear of the band. */
   .tree-frame-content {
-    padding: 3.75rem 0;
+    padding: 0 0 3.75rem;
   }
 }
 
@@ -484,18 +484,39 @@ td {
   grid-column: 1;
 }
 
+/*
+  Title and date in two columns, the same shape as the reading list. The date
+  used to be an inline-block of fixed width, which meant a title that wrapped
+  put its second line underneath the date rather than beside it -- fine on a
+  desktop, a mess on a phone.
+*/
 .post-list {
   padding: 0;
   list-style: none;
 }
 
 .post-list li {
-  margin-bottom: 0.6em;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 1.5em;
+  margin-bottom: 0.8em;
 }
 
 .post-list time {
-  display: inline-block;
-  min-width: 9em;
   color: var(--muted);
   font-size: 0.9em;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Too narrow for two columns: the date sits under its title instead. */
+@media (max-width: 34rem) {
+  .post-list li {
+    grid-template-columns: 1fr;
+    margin-bottom: 1em;
+  }
+
+  .post-list time {
+    text-align: left;
+  }
 }

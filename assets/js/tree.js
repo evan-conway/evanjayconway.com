@@ -19,7 +19,7 @@
     slowdown: 0.25, // speed of each level of branch relative to the one above
     catchup: 3.5, // how much time accelerates once the skeleton is drawn
     speed: 195, // svg units per second, for the ring
-    ribbonSpeed: 128, // slower on the narrow layout, where each run is shorter
+    ribbonSpeed: 170, // the narrow layout's single ribbon
     ramp: 0.53, // seconds over which catch-up eases in
     resettle: 800, // ms of stillness after a resize before the tree regrows
     minChange: 24, // px of size change worth regenerating for
@@ -313,13 +313,12 @@
     area: w * h - Math.max(0, w - 2 * band) * Math.max(0, h - 2 * band),
   });
 
-  // A horizontal band across the top or the bottom. Two ends, no loop, so
-  // nothing to cut.
-  const ribbonSpec = (w, h, band, edge) => ({
+  // A horizontal band across the bottom. Two ends, no loop, so nothing to cut.
+  const ribbonSpec = (w, h, band) => ({
     w,
     h,
-    inside: (x, y) => (edge === "top" ? y < band : y > h - band),
-    seed: [w / 2, edge === "top" ? band / 2 : h - band / 2],
+    inside: (x, y) => y > h - band,
+    seed: [w / 2, h - band / 2],
     cut: () => false,
     speed: SETTINGS.ribbonSpeed,
     area: w * band,
@@ -331,7 +330,7 @@
   function specsFor(frame, w, h, band) {
     const layout = getComputedStyle(frame).getPropertyValue("--tree-shape").trim();
 
-    if (layout === "ribbons") return [ribbonSpec(w, h, band, "top"), ribbonSpec(w, h, band, "bottom")];
+    if (layout === "ribbon") return [ribbonSpec(w, h, band)];
     return [ringSpec(w, h, band)];
   }
 
