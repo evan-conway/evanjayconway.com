@@ -303,6 +303,14 @@ td {
   /* Decorative: never intercept clicks or text selection. */
   pointer-events: none;
   transition: opacity 0.25s ease;
+  /*
+    An svg clips to its viewport by default. Scattered points sit right up to
+    the edge of the band, so a stroke centred on one is cut in half lengthwise
+    and the branch appears shaved flat. Letting it paint outside costs half a
+    stroke width -- under a pixel -- and the canvas ignores pointer events, so
+    nothing else is affected.
+  */
+  overflow: visible;
 }
 
 /*
