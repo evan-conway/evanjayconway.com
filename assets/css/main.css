@@ -373,6 +373,7 @@ td {
 
 .site-header {
   display: flex;
+  justify-content: space-between;
   gap: 1.5em;
   align-items: baseline;
   padding: 1.5em 0 2.5em;
