@@ -23,7 +23,7 @@ posts.html               post index (/posts/)
 _posts/                  one file per post
 _layouts/default.html    <html> skeleton; every page passes through it
 _layouts/page.html       standalone page: <h1> + content
-_layouts/post.html       post: <h1> + date + description + content
+_layouts/post.html       post: <h1> + date + content
 _includes/head.html      everything in <head>, incl. MathJax
 _includes/header.html    site header and nav
 _includes/footer.html    site footer
