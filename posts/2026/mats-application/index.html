@@ -1,0 +1,241 @@
+<!doctype html>
+<!--
+  The base layout every page ends up inside.
+
+  The other two layouts (page.html and post.html) wrap a page's content and
+  then hand it to this one, which supplies the surrounding HTML document.
+
+  Note: Liquid runs inside HTML comments too, so don't write Liquid tags in a
+  comment unless you mean them to execute. The doctype stays on line 1.
+-->
+<html lang="en">
+  <head>
+    <!-- Everything inside <head>. Edit this file to change metadata for every page at once. -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>
+  My MATS 11.0 Application Experience &middot; Evan Conway
+</title>
+
+<meta name="description" content="Some thoughts on my MATS application experience, and advice for future applicants" />
+
+<!--
+  The tab icon: the site's initial in Vollkorn, drawn as a path so it does not
+  depend on the font loading. One svg covers every current browser; the png is
+  for iOS home screens, which do not take svg.
+-->
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png" />
+
+<!--
+  The body font is referenced from main.css, which the browser only reads
+  after fetching it. Preloading starts the font download in parallel instead,
+  which shortens the moment where text renders in the fallback serif.
+-->
+<link rel="preload" href="/assets/fonts/vollkorn-variable.woff2" as="font" type="font/woff2" crossorigin />
+
+<!-- Tells search engines which URL is the real one for this page. -->
+<link rel="canonical" href="https://evanjayconway.com/posts/2026/mats-application/" />
+
+<!--
+  The `?v=` is the site's build time. Without it browsers happily serve a
+  cached stylesheet after a rebuild, which during development means every
+  change appears not to have worked until a hard reload.
+-->
+<link rel="stylesheet" href="/assets/css/main.css?v=1787516095" />
+
+<!--
+  MathJax renders the LaTeX in posts.
+
+  Every post loads it, so math in a post can never silently fail to render.
+  Other pages have to ask for it with `math: true` in their front matter --
+  the library is about a megabyte, and even served from cache it costs a
+  ~90ms main-thread stall while it parses and runs its startup sweep, which
+  is visible as a stutter in anything animating on the page.
+
+  The inlineMath line is required: kramdown converts $$...$$ display math into
+  \[...\] (which MathJax reads by default) but passes single-$ inline math
+  through untouched, so MathJax has to be told to look for it.
+-->
+
+  <script>
+    window.MathJax = { tex: { inlineMath: [["$", "$"]] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+  </head>
+  <body>
+    <!--
+  Site header, shown on every page.
+
+  To add a page to the nav, add one <a> line below and create the matching
+  page file (see AGENTS.md). The links are written out by hand rather than
+  generated from a list, so that adding one is a single obvious edit.
+-->
+<header class="site-header">
+    <a href="/">Evan Conway</a>
+  
+  <nav>
+    <a href="/reading/">Reading</a> ·
+    <a href="/posts/">Writing</a>
+  </nav>
+</header>
+
+
+    <main>
+      <!--
+  A blog post: title, date, then the body.
+
+  The front matter's `description` is deliberately not shown on the page -- it
+  feeds the <meta name="description"> tag in head.html instead.
+-->
+<article>
+  <h1>My MATS 11.0 Application Experience</h1>
+
+  <p class="post-date">
+    <time datetime="2026-08-23T00:00:00+00:00">August 23, 2026</time>
+  </p>
+
+  <p><strong>Note: MATS Winter 2027 applications are open! You can <a href="https://www.matsprogram.org/program/winter-2027">apply here</a>. If you’re reading this later, you can check the <a href="https://www.matsprogram.org/">main MATS page</a> for information on upcoming cycles.</strong></p>
+
+<p>I applied to MATS Autumn 2026 during this past summer, and was accepted into the OpenAI safety team stream. This post is about the application process, my experience applying, and my advice for future applicants.</p>
+
+<p>I would strongly recommend applying to MATS and other fellowships if you’re interested in AI safety and want to make an immediate impact. My sense is that MATS is one of the fastest ways to get frontier AI safety experience, and is one of the best pathways to AI safety positions.</p>
+
+<p>Some general advice:</p>
+
+<ul>
+  <li>Apply even if you don’t feel qualified. I had no ML experience (much less AI safety experience) on my resume when I applied, had minimal work experience, and didn’t go to a top school.</li>
+  <li>Don’t stress too much. I did poorly on several parts of the application process and thought I had low chances of getting an offer, but things worked out in the end.</li>
+  <li>Prioritize quality over quantity when writing your stream applications, and don’t apply to too many streams.</li>
+  <li>Accept that there’s going to be luck / noise in applications. I was rejected from 8/9 of the MATS streams I applied to, and before MATS, I was rejected from Astra and the OpenAI safety fellowship.</li>
+</ul>
+
+<h2 id="general-application">General Application</h2>
+<hr />
+
+<p>A bit about my background coming into the application process:</p>
+
+<ul>
+  <li>I had just graduated from UVA after my third year there (I majored in math and CS), and was going into the master’s in machine learning program at CMU.</li>
+  <li>I had a decent amount of research experience, but all of it was in automated planning and mathematics.
+    <ul>
+      <li>I had one first-authored planning paper (only on arXiv) and two math papers (one accepted to a journal, one very close to release). I was a co-first-author on both math papers.</li>
+      <li>My published math paper was coauthored with a well-known figure in the field, which I suspect boosted my application.</li>
+    </ul>
+  </li>
+  <li>At the same time as I was applying, I was doing a SWE internship at a fairly well known (roughly FAANG-tier) company, which was probably a good signal of general coding ability.</li>
+  <li>I had self-studied some LLM-related topics, but didn’t have anything on my resume related to that. Very little of this studying was in AI safety.</li>
+</ul>
+
+<p>I primarily applied to MATS because I was interested in AI safety and wanted a faster way to get into the field than doing a master’s degree, which was my best alternative. I was specifically interested in MATS because of its strong reputation within the AI safety community and history of producing impressive research.</p>
+
+<p>The initial application for MATS was fairly straightforward, and involved submitting my resume, two medium-length essays, and contact information for my references. I get the sense that the initial part is mainly just basic filtering, so I would just focus on writing solid responses for the essay questions. Don’t spend too much time stressing about this section. The essays focused on discussing past experience (work, projects, research) and investigating how you think about AI safety. Total application time is roughly 1-3 hours depending on how fast you write.</p>
+
+<p>As part of this stage, you choose which tracks (general research areas) you’re interested in. I chose the empirical and theory tracks, which I think is typical for applicants interested in more technical work. The tracks you choose determine which streams you’ll apply to, so make sure to look at the streams before choosing your tracks. <a href="https://www.matsprogram.org/tracks">This page</a> has helpful information about which streams are in which tracks. Other than that, the tracks don’t seem to matter much.</p>
+
+<h2 id="second-stage">Second Stage</h2>
+<hr />
+
+<p>A week later, I found out that I had moved on to the second stage. This stage was somewhat reminiscent of college applications: you need to take standardized tests, submit references, and write essays. However, in contrast to the college application cycle, MATS only gives you around a week to complete everything. This means that time allocation during this stage is very important.</p>
+
+<h3 id="references">References</h3>
+
+<p>You choose your references when applying, but MATS only reaches out to them when you hit the second stage. There’s not much you can do here other than making sure that you tell your references what MATS is (so they can write informed recommendations) and choosing references that can confidently speak about your research abilities.</p>
+
+<h3 id="tests">Tests</h3>
+
+<p>MATS had me take two assessments: one coding test called the “applied AI assessment” and a research taste test. Each test took around an hour and a half. I didn’t find either to be particularly “prep-able” and don’t have much advice on how to approach them, so I’d recommend just knocking them out whenever you have time to focus. These tests are exclusive to the empirical stream. These tests are likely to change in future applications, so don’t worry too much about the exact details of the tests here.</p>
+
+<p>The applied AI assessment was a coding test, but not of the standard Leetcode variety. Instead, the assessment was more focused on writing quality evaluations for LLM-generated outputs. I found the instructions confusing and the provided AI copilot frustratingly stupid, so I spent a large portion of my time flailing. I scored a 435/600, which (based on scrolling Reddit comments) seemed to be at the lower extreme of the distribution of scores. One takeaway here is that low test scores aren’t necessarily disqualifying.</p>
+
+<p>The research taste assessment was focused on a fictional AI-related scenario. The main content of the assessment was coming up with hypotheses and figuring out how to prioritize various follow-ups. The main goal here seemed to be to test if I could reason well without being overconfident or over-indexing on irrelevant information. I wasn’t told my score for the research taste assessment, but felt decent about it.</p>
+
+<h3 id="stream-applications">Stream Applications</h3>
+
+<p>Some general information about my essay writing experience:</p>
+
+<ul>
+  <li>MATS says that strong responses typically take 45 to 90 minutes. I’d estimate that it took closer to 120 minutes for me to put down a strong response. How much time to spend here likely depends heavily on how much AI safety background you have, since a large portion of my time expenditure was thinking through research proposals instead of writing.</li>
+  <li>In total, I responded to 14 questions for 9 streams, with around 4500 words of responses (~320 per question on average). I’d estimate that this took me 20-25 hours in total.</li>
+  <li>For most of the essays with limited word count, I was pretty close to the limit. For essays without word count limits, I wrote around 350 words on average. I would worry less about word count and more about making sure you’re properly conveying your ideas while not wasting the reader’s time.</li>
+</ul>
+
+<p>MATS’s official advice was that applying to more streams doesn’t give much better results. At first, I thought this was silly, but later regretted not listening to them. I applied to nine streams (many more than I’d recommend) and ended up with one of my top choices, so I’d recommend just applying to the places you’re most excited about. My recommendation would be to apply to 3-5 streams. Try to prioritize streams with multiple mentors, since that way you can hit several people with one application.</p>
+
+<p>The main reason to limit your application count is that writing responses takes a while, and writing good responses takes even longer. My impression is that your essays are <strong>extremely</strong> important, particularly if (like me) you have limited AI safety background. During my OpenAI interview, I got the sense that my essay was the main reason I got an interview. Since you only have a week to write your responses, this means that you need to figure out what kind of quality versus quantity tradeoff you want to make.</p>
+
+<p>As an example of what not to do, I unwisely applied to the Meta Superintelligence stream. I wasn’t super excited about their work, but ended up writing around 1000 words for their four questions, which ate up a ton of time that could have been better spent elsewhere.</p>
+
+<p>The most common application question theme is discussing a research direction that you’re interested in. Some speculative tips here:</p>
+
+<ul>
+  <li>Try to focus on a topic that others won’t. For example, I wrote one of my Anthropic essays about Natural Language Autoencoders<sup id="fnref:nla"><a href="#fn:nla" class="footnote" rel="footnote" role="doc-noteref">1</a></sup>. I think this was a bad idea, because Natural Language Autoencoders were a very popular topic of discussion at the time. It’s probably easier to stand out if you’re one of the only applicants writing on a topic. As a bonus, I think exploring a variety of potential research topics is also generally helpful, since it helps you find a topic you’re excited about, rather than whatever you’re most familiar with.</li>
+  <li>Emphasize originality in your research proposals. Essays are one of the best ways streams can get a sense for your research taste, so you should try to come up with ideas that aren’t obvious. If you’re writing about a follow-up to a paper, you should avoid just proposing a follow-up that the paper itself suggests, since that doesn’t show any original thought.</li>
+  <li>Go into detail. Most research time is spent running experiments, so it’s good to be specific and show that you know enough to actually implement whatever idea you came up with. For my OpenAI application, I went into a lot of detail about what models I’d run on, how various intermediate results would influence my thinking, and what evaluations I’d use.</li>
+</ul>
+
+<h2 id="interviews">Interviews</h2>
+<hr />
+
+<p>I initially thought that my chances of advancing further were low, since it’d been several weeks since the second stage and I hadn’t heard anything. However, one day I was surprised to open my email and see an interview invitation for OpenAI! I had one 25 minute interview, which was mainly aimed at assessing research taste and consisted of a quick presentation on a paper I was given the day before, along with a brief discussion on my research interests. I thought my presentation went very well and that my performance in the follow-up discussion was decent.</p>
+
+<p>Some small things I learned here (based on my experience, may not generalize):</p>
+
+<ul>
+  <li>I spent a bunch of time reading my interviewer’s past papers, which ended up being a huge waste of time since we never talked about them. Researchers’ interests change pretty fast and they don’t seem to expect you to have read their papers, so it’s not worth the time investment.</li>
+  <li>If there’s some kind of component you can prepare for beforehand, you should invest time in that. I spent a large amount of time preparing my presentation, which meant that the first 15 minutes of my interview went really well.</li>
+  <li>You should be prepared to talk about your essays and research ideas. I was caught a bit flat-footed when my interviewer started bringing my stream question response into the discussion, and should’ve spent more time reviewing that.</li>
+  <li>Try to put yourself in the interviewer’s shoes. A major reason my presentation went well was because I spent a lot of time thinking about what my interviewer was looking to get out of it, and optimized for hitting those targets.</li>
+</ul>
+
+<h2 id="final-results">Final Results</h2>
+<hr />
+
+<p>I was informed about my acceptance within a few days of my interview. However, I think this was a faster turnaround than normal, since my OpenAI interview happened near the end of the process. I was prompted to accept within a few days, so if you reach interviews, I’d recommend making plans for what you’ll need to do if you’re accepted. In my case, I had been planning to start the MSML program at CMU, so I had to rush to cancel my housing in Pittsburgh and drop out of the program.</p>
+
+<p>In total, I would estimate that I spent around 35-40 hours on MATS:</p>
+
+<ul>
+  <li>2 hours for the initial application</li>
+  <li>4 hours for tests</li>
+  <li>20-25 hours for writing stream responses</li>
+  <li>10 hours preparing for my interview</li>
+</ul>
+
+<p>However, I think that I spent too much time on several stages. For example, I applied to too many streams and spent too long doing irrelevant prep for my OpenAI interview. For most applicants similar to me I think it would take closer to 24 hours in total:</p>
+
+<ul>
+  <li>2 hours for the initial application</li>
+  <li>4 hours for tests</li>
+  <li>12 hours for writing stream responses</li>
+  <li>6 hours preparing for interviews</li>
+</ul>
+
+<p>It’s also worth noting that a lot of this time is only spent at later stages of the application. Applying is only 2 hours, and the interview prep time only comes into play if you make it to final interviews.</p>
+
+<p>If you have any questions about applying to MATS, please feel free to <a href="/">contact me</a>! You can also ask MATS staff directly about the applications process at <a href="mailto:applications@matsprogram.org">applications@matsprogram.org</a>.</p>
+
+<h2 id="references-1">References</h2>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:nla">
+      <p><a href="https://transformer-circuits.pub/2026/nla/index.html"><em>Natural Language Autoencoders</em></a>, Transformer Circuits <a href="#fnref:nla" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+</article>
+
+    </main>
+
+    <!-- Site footer, shown on every page. -->
+<footer class="site-footer">
+  <p>&copy; 2026 Evan Conway</p>
+</footer>
+
+  </body>
+</html>
