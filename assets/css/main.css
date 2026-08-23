@@ -274,6 +274,15 @@ td {
   color: var(--muted);
 }
 
+/*
+  kramdown wraps the entries in a plain <ol>, and the browser's default 1em top
+  margin on it stacks under the padding above, opening a gap no other section
+  has. The padding is the tuned spacing; this margin is surplus.
+*/
+.footnotes ol {
+  margin-top: 0;
+}
+
 /* ----------------------------------------------------------- tree frame */
 
 /*
