@@ -7,6 +7,9 @@
 
 - year: 2026
   books:
+    - title: "House on Fire: The Fight to Eradicate Smallpox"
+      author: William Foege
+      month: September
     - title: "Through the Eye of a Needle: Wealth, the Fall of Rome, and the Making of Christianity in the West, 350–550 AD"
       author: Peter Brown
       month: August
