@@ -7,6 +7,9 @@
 
 - year: 2026
   books:
+    - title: "The Doomsday Machine: Confessions of a Nuclear War Planner"
+      author: Daniel Ellsberg
+      month: September
     - title: "House on Fire: The Fight to Eradicate Smallpox"
       author: William Foege
       month: September
