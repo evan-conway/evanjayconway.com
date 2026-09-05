@@ -7,6 +7,9 @@
 
 - year: 2026
   books:
+    - title: Axiomatic
+      author: Greg Egan
+      month: September
     - title: "The Doomsday Machine: Confessions of a Nuclear War Planner"
       author: Daniel Ellsberg
       month: September
