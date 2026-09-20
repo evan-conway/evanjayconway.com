@@ -1,12 +1,8 @@
-# Books read, newest year first, and newest first within a year.
-#
-# Adding one is a title, an author and the month. No ratings or notes on
-# purpose: a log that asks nothing of you when you finish a book is one you
-# will keep. Years group the entries so the page reads as a record rather than
-# a feed, and does not look stalled when a month goes by without an entry.
-
 - year: 2026
   books:
+    - title: Empire of AI
+      author: Karen Hao
+      month: September
     - title: Axiomatic
       author: Greg Egan
       month: September
