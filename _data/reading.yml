@@ -1,5 +1,8 @@
 - year: 2026
   books:
+    - title: "The Scaling Era: An Oral History of AI, 2019-2025"
+      author: Dwarkesh Patel and Gavin Leech
+      month: September
     - title: Blindsight
       author: Peter Watts
       month: September
