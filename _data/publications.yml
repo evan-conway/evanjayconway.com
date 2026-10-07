@@ -11,6 +11,14 @@
 #   date     month and year of that venue. Use "to appear" for a paper that's
 #            accepted but not yet issued.
 
+# The title is HTML rather than LaTeX so the landing page doesn't have to load
+# MathJax (~1MB, ~90ms main-thread stall) for one inline expression.
+- title: "The Area Asymptotics of (<i>sn</i>,<i>n</i>)-Dyck Paths"
+  url: /papers/fuss-catalan/
+  authors: Evan Conway, James Harbour
+  venue: arXiv
+  date: October 2026
+
 - title: "POrTAL: Plan-Orchestrated Tree Assembly for Lookahead"
   url: /papers/portal/
   authors: Evan Conway, David Porfirio, David Chan, Mark Roberts, Laura M. Hiatt
