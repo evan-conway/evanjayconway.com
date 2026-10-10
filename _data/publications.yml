@@ -2,7 +2,7 @@
 #
 # Each entry needs:
 #   title    the paper's title
-#   url      where the title links -- prefer the site's own /papers/<slug>/
+#   url      where the title links -- prefer the site's own /papers/<slug>
 #            short link, so the destination can change in one place
 #   authors  the full author list, in order, comma-separated. The template
 #            bolds site.author automatically, so write the name normally.
@@ -14,19 +14,19 @@
 # The title is HTML rather than LaTeX so the landing page doesn't have to load
 # MathJax (~1MB, ~90ms main-thread stall) for one inline expression.
 - title: "The Area Asymptotics of (<i>sn</i>,<i>n</i>)-Dyck Paths"
-  url: /papers/fuss-catalan/
+  url: /papers/fuss-catalan
   authors: Evan Conway, James Harbour
   venue: arXiv
   date: October 2026
 
 - title: "POrTAL: Plan-Orchestrated Tree Assembly for Lookahead"
-  url: /papers/portal/
+  url: /papers/portal
   authors: Evan Conway, David Porfirio, David Chan, Mark Roberts, Laura M. Hiatt
   venue: arXiv
   date: December 2025
 
 - title: Decomposing a factorial into large factors
-  url: /papers/guy-selfridge/
+  url: /papers/guy-selfridge
   authors: Boris Alexeev, Evan Conway, Matthieu Rosenfeld, Andrew V. Sutherland, Terence Tao, Markus Uhr, Kevin Ventullo
   venue: Mathematics of Computation
   date: to appear

@@ -82,15 +82,22 @@ arXiv URL, e.g. `evanjayconway.com/papers/portal`. Create `papers/<slug>.md`:
 ```markdown
 ---
 layout: redirect
-permalink: /papers/<slug>/
+permalink: /papers/<slug>
 title: "Paper: Full Title Here"
 redirect: https://arxiv.org/abs/XXXX.XXXXX
 ---
 ```
 
-The `redirect` layout is intentionally standalone -- it loads no CSS or JS, so
-the browser leaves before it renders anything. Don't route it through
-default.html; that's what made the old site's version flash a whole page first.
+The permalink has **no trailing slash** on purpose. With one, Jekyll writes
+`papers/<slug>/index.html` and GitHub Pages answers the slashless link people
+actually type with a 301 to the slashed one -- a whole extra round trip. Without
+it, Jekyll writes `papers/<slug>.html`, which Pages serves at `/papers/<slug>`
+directly. (The slashed form then 404s, so link to the slashless one.)
+
+The `redirect` layout is intentionally standalone -- it loads no CSS and only a
+one-line inline script, so the browser leaves before it renders anything. Don't
+route it through default.html; that's what made the old site's version flash a
+whole page first.
 
 **Add a page.** Create `whatever.html` (or `.md`) in the repo root:
 
