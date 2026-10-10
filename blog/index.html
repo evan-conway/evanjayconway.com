@@ -4,22 +4,30 @@
   layout sends the browser straight there.
 
   Deliberately standalone: it does NOT use default.html, so the page pulls in
-  no stylesheet, no MathJax, and no site chrome. The redirect is the first
-  thing in the document head, so it fires before the browser requests anything
-  else -- the whole page is ~700 bytes and there is nothing to render.
+  no stylesheet, no MathJax, and no site chrome.
 
   (GitHub Pages serves static files only, so a real 301 isn't available
-  without a plugin; a meta refresh with a zero delay is the closest thing,
-  and browsers treat it as a redirect for history and back-button purposes.)
+  without a plugin. This is the closest thing.)
+
+  The script is what actually redirects. It runs while the <head> is still
+  being parsed, so navigation starts before anything is painted. A meta
+  refresh alone waits for the page to load and paints it first, which showed
+  as a blank page with a link on it until arXiv answered. location.replace
+  also keeps this page out of the history, so Back skips over it.
+
+  The body is empty on purpose: with nothing to paint, the browser keeps the
+  previous page on screen until arXiv's arrives. The meta refresh and the
+  <noscript> link are fallbacks for visitors without JavaScript.
 -->
 <html lang="en">
   <head>
+    <script>location.replace("/posts/");</script>
     <meta charset="utf-8" />
     <meta http-equiv="refresh" content="0; url=/posts/" />
     <link rel="canonical" href="/posts/" />
     <title>Writing</title>
   </head>
   <body>
-    <a href="/posts/">/posts/</a>
+    <noscript><a href="/posts/">/posts/</a></noscript>
   </body>
 </html>
