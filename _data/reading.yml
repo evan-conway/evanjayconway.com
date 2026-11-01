@@ -1,5 +1,8 @@
 - year: 2026
   books:
+    - title: Micromotives and Macrobehavior
+      author: Thomas Schelling
+      month: October
     - title: Accelerando
       author: Charles Stross
       month: October
