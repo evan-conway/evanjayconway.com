@@ -1,5 +1,8 @@
 - year: 2026
   books:
+    - title: "The Diamond Age: Or, a Young Lady's Illustrated Primer"
+      author: Neal Stephenson
+      month: November
     - title: Micromotives and Macrobehavior
       author: Thomas Schelling
       month: October
